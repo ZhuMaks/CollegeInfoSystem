@@ -7,6 +7,16 @@
     <Grid>
         <StackPanel>
             <Button Content="Студенти" Command="{Binding OpenStudentsViewCommand}" Width="100" Height="30" Margin="10"/>
+            <Button Content="Викладачі" Command="{Binding OpenTeachersViewCommand}" Width="100" Height="30" Margin="10"/>
+            <Button Content="Групи" Command="{Binding OpenGroupsViewCommand}" Width="100" Height="30" Margin="10"/>
+            <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Width="100" Height="30" Margin="10"/>
+            <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Width="100" Height="30" Margin="10"/>
+            <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Width="100" Height="30" Margin="10" />
+
+
+
+
+
 
             <!-- Контейнер для динамічних вьюшок -->
             <ContentControl Content="{Binding CurrentView}" />

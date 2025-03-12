@@ -1,42 +1,40 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
-using Microsoft.EntityFrameworkCore;
 
 namespace CollegeInfoSystem
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
-        public App()
-        {
-            // Тут можна додати код ініціалізації програми.
-            // Наприклад, обробку подій запуску, реєстрацію сервісів, тощо.
-        }
-
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
             var dbContext = new CollegeDbContext();
+
             var studentService = new StudentService(dbContext);
             var studentViewModel = new StudentViewModel(studentService);
-            var studentsView = new StudentsView { DataContext = studentViewModel };
 
+            var teacherService = new TeacherService(dbContext);
+            var teacherViewModel = new TeacherViewModel(teacherService);
+
+            var groupService = new GroupService(dbContext);
+            var groupViewModel = new GroupViewModel(groupService);
+
+            var scheduleService = new ScheduleService(dbContext);
+            var scheduleViewModel = new ScheduleViewModel(scheduleService);
+
+            var facultyService = new FacultyService(dbContext);
+            var facultyViewModel = new FacultyViewModel(facultyService);
+
+            var staffService = new StaffService(dbContext);
+            var staffViewModel = new StaffViewModel(staffService);
+
+            var mainViewModel = new MainViewModel(studentViewModel, teacherViewModel, groupViewModel, scheduleViewModel, facultyViewModel, staffViewModel);
+            var mainWindow = new MainWindow { DataContext = mainViewModel };
+
+            mainWindow.Show();
         }
-
-        protected override void OnExit(ExitEventArgs e)
-        {
-            base.OnExit(e);
-
-            // Тут можна додати код, який виконується при завершенні програми.
-            // Наприклад, збереження налаштувань, звільнення ресурсів.
-        }
-
-        // Тут можна додати інші методи та обробники подій.
     }
 }

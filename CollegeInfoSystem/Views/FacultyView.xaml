@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="CollegeInfoSystem.Views.FacultyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid>
+        <StackPanel>
+            <ListView ItemsSource="{Binding Faculties}" SelectedItem="{Binding SelectedFaculty}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding FacultyID}" Width="50"/>
+                        <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding FacultyName}" Width="200"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                <Button Content="Додати" Command="{Binding AddFacultyCommand}" Width="100" Margin="5"/>
+                <Button Content="Оновити" Command="{Binding UpdateFacultyCommand}" Width="100" Margin="5"/>
+                <Button Content="Видалити" Command="{Binding DeleteFacultyCommand}" Width="100" Margin="5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
