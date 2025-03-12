@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using CollegeInfoSystem.ViewModels;
 
 namespace CollegeInfoSystem.Views
 {
@@ -19,6 +20,7 @@ namespace CollegeInfoSystem.Views
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new MainViewModel();
         }
     }
 }

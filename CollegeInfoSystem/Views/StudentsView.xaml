@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="CollegeInfoSystem.Views.StudentsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid>
+        <StackPanel>
+            <ListView ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="50"/>
+                        <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="100"/>
+                        <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="100"/>
+                        <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="150"/>
+                        <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                <Button Content="Додати" Command="{Binding AddStudentCommand}" Width="100" Margin="5"/>
+                <Button Content="Оновити" Command="{Binding UpdateStudentCommand}" Width="100" Margin="5"/>
+                <Button Content="Видалити" Command="{Binding DeleteStudentCommand}" Width="100" Margin="5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
