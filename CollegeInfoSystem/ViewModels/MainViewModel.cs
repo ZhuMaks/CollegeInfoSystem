@@ -4,8 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CollegeInfoSystem.ViewModels;
 
-namespace CollegeInfoSystem.ViewModels;
-
 public class MainViewModel : BaseViewModel
 {
     private object? _currentView;
@@ -18,6 +16,13 @@ public class MainViewModel : BaseViewModel
             OnPropertyChanged();
         }
     }
+
+    private readonly StudentsView _studentsView;
+    private readonly TeachersView _teachersView;
+    private readonly GroupsView _groupsView;
+    private readonly ScheduleView _scheduleView;
+    private readonly FacultyView _facultyView;
+    private readonly StaffView _staffView;
 
     private readonly StudentViewModel _studentViewModel;
     private readonly TeacherViewModel _teacherViewModel;
@@ -42,12 +47,32 @@ public class MainViewModel : BaseViewModel
         _facultyViewModel = facultyViewModel;
         _staffViewModel = staffViewModel;
 
-        OpenStudentsViewCommand = new RelayCommand(() => CurrentView = new StudentsView { DataContext = _studentViewModel });
-        OpenTeachersViewCommand = new RelayCommand(() => CurrentView = new TeachersView { DataContext = _teacherViewModel });
-        OpenGroupsViewCommand = new RelayCommand(() => CurrentView = new GroupsView { DataContext = _groupViewModel });
-        OpenScheduleViewCommand = new RelayCommand(() => CurrentView = new ScheduleView { DataContext = _scheduleViewModel });
-        OpenFacultyViewCommand = new RelayCommand(() => CurrentView = new FacultyView { DataContext = _facultyViewModel });
-        OpenStaffViewCommand = new RelayCommand(() => CurrentView = new StaffView { DataContext = _staffViewModel });
-        _staffViewModel = staffViewModel;
+        // Створюємо екземпляри View один раз
+        _studentsView = new StudentsView { DataContext = _studentViewModel };
+        _teachersView = new TeachersView { DataContext = _teacherViewModel };
+        _groupsView = new GroupsView { DataContext = _groupViewModel };
+        _scheduleView = new ScheduleView { DataContext = _scheduleViewModel };
+        _facultyView = new FacultyView { DataContext = _facultyViewModel };
+        _staffView = new StaffView { DataContext = _staffViewModel };
+
+        OpenStudentsViewCommand = new RelayCommand(() => SetCurrentView(_studentsView, _studentViewModel));
+        OpenTeachersViewCommand = new RelayCommand(() => SetCurrentView(_teachersView, _teacherViewModel));
+        OpenGroupsViewCommand = new RelayCommand(() => SetCurrentView(_groupsView, _groupViewModel));
+        OpenScheduleViewCommand = new RelayCommand(() => SetCurrentView(_scheduleView, _scheduleViewModel));
+        OpenFacultyViewCommand = new RelayCommand(() => SetCurrentView(_facultyView, _facultyViewModel));
+        OpenStaffViewCommand = new RelayCommand(() => SetCurrentView(_staffView, _staffViewModel));
+
+        // Встановлення стартового вигляду
+        CurrentView = _studentsView;
     }
+
+    private async void SetCurrentView(object view, BaseViewModel viewModel)
+    {
+        if (viewModel is ILoadable loadableViewModel)
+        {
+            await loadableViewModel.LoadDataAsync();
+        }
+        CurrentView = view;
+    }
+
 }
