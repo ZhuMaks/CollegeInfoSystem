@@ -13,6 +13,8 @@
                         <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="120"/>
                         <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="120"/>
                         <GridViewColumn Header="Посада" DisplayMemberBinding="{Binding Position}" Width="150"/>
+                        <GridViewColumn Header="Пошта" DisplayMemberBinding="{Binding Email}" Width="200"/>
+                        <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="150"/>
                     </GridView>
                 </ListView.View>
             </ListView>

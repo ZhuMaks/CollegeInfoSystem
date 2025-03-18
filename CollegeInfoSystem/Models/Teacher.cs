@@ -13,6 +13,5 @@ public class Teacher
     public string LastName { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
-    public int DepartmentID { get; set; }
     public bool IsCurator { get; set; }
 }

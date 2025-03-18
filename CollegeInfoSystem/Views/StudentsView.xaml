@@ -14,6 +14,9 @@
                         <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="100"/>
                         <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="150"/>
                         <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
+                        <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="150"/>
+                        <GridViewColumn Header="Дата народження" DisplayMemberBinding="{Binding DateOfBirth}" Width="150"/>
+                        <GridViewColumn Header="Адреса" DisplayMemberBinding="{Binding Address}" Width="150"/>
                     </GridView>
                 </ListView.View>
             </ListView>
