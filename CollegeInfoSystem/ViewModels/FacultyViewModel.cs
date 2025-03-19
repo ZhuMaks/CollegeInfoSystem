@@ -54,11 +54,13 @@ public class FacultyViewModel : BaseViewModel, ILoadable
     private async void AddFaculty()
     {
         var newFaculty = new Faculty();
-        OpenFacultyDialog(newFaculty);
-
-        await _facultyService.AddFacultyAsync(newFaculty);
-        await LoadDataAsync();
+        if (OpenFacultyDialog(newFaculty))
+        {
+            await _facultyService.AddFacultyAsync(newFaculty);
+            await LoadDataAsync();
+        }
     }
+
 
     private async void UpdateFaculty()
     {
@@ -80,12 +82,21 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         }
     }
 
-    private void OpenFacultyDialog(Faculty faculty)
+    private bool OpenFacultyDialog(Faculty faculty)
     {
         var viewModel = new FacultyDialogViewModel(faculty);
         var dialog = new FacultyDialog { DataContext = viewModel };
 
-        viewModel.CloseAction = () => dialog.Close();
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
+        {
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
         dialog.ShowDialog();
+        return isSaved;
     }
+
+
 }

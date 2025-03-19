@@ -53,10 +53,11 @@ public class StaffViewModel : BaseViewModel, ILoadable
     private async void AddStaff()
     {
         var newStaff = new Staff();
-        OpenStaffDialog(newStaff);
-
-        await _staffService.AddStaffAsync(newStaff);
-        await LoadDataAsync();
+        if (OpenStaffDialog(newStaff))
+        {
+            await _staffService.AddStaffAsync(newStaff);
+            await LoadDataAsync();
+        }
     }
 
     private async void UpdateStaff()
@@ -79,12 +80,19 @@ public class StaffViewModel : BaseViewModel, ILoadable
         }
     }
 
-    private void OpenStaffDialog(Staff staff)
+    private bool OpenStaffDialog(Staff staff)
     {
         var viewModel = new StaffDialogViewModel(staff);
         var dialog = new StaffDialog { DataContext = viewModel };
 
-        viewModel.CloseAction = () => dialog.Close();
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
+        {
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
         dialog.ShowDialog();
+        return isSaved;
     }
 }

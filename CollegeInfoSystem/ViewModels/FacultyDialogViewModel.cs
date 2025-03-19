@@ -8,6 +8,7 @@ public class FacultyDialogViewModel : BaseViewModel
     private Faculty _originalFaculty;
 
     public Action CloseAction { get; set; }
+    public bool IsSaved { get; private set; } = false; // Флаг для перевірки
 
     public Faculty Faculty
     {
@@ -44,15 +45,15 @@ public class FacultyDialogViewModel : BaseViewModel
         CancelCommand = new RelayCommand(Cancel);
     }
 
-    public void Save()
+    private void Save()
     {
-        _faculty.FacultyName = FacultyName;
+        IsSaved = true; // Позначаємо, що дані збережені
         CloseAction?.Invoke();
     }
 
-    public void Cancel()
+    private void Cancel()
     {
-        _faculty.FacultyName = _originalFaculty.FacultyName;
+        IsSaved = false; // Позначаємо, що відмінили
         CloseAction?.Invoke();
     }
 }

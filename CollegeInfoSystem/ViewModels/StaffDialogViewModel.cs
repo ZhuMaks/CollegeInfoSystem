@@ -8,6 +8,7 @@ public class StaffDialogViewModel : BaseViewModel
     private Staff _originalStaff;
 
     public Action CloseAction { get; set; }
+    public bool IsSaved { get; private set; } = false; // Флаг для перевірки
 
     public Staff Staff
     {
@@ -96,17 +97,13 @@ public class StaffDialogViewModel : BaseViewModel
 
     public void Save()
     {
-        _staff.FirstName = FirstName;
-        _staff.LastName = LastName;
-        _staff.Position = Position;
-        _staff.Email = Email;
-        _staff.Phone = Phone;
-
+        IsSaved = true; // Вказуємо, що дані збережені
         CloseAction?.Invoke();
     }
 
     public void Cancel()
     {
+        IsSaved = false; // Вказуємо, що відмінили зміни
         _staff.FirstName = _originalStaff.FirstName;
         _staff.LastName = _originalStaff.LastName;
         _staff.Position = _originalStaff.Position;
