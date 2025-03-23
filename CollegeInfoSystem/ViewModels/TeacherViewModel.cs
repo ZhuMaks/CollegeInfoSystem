@@ -1,19 +1,18 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
+using CollegeInfoSystem.ViewModels;
+using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
-namespace CollegeInfoSystem.ViewModels;
-
-public class TeacherViewModel : BaseViewModel
+public class TeacherViewModel : BaseViewModel, ILoadable
 {
     private readonly TeacherService _teacherService;
-    private Teacher _selectedTeacher;
 
     public ObservableCollection<Teacher> Teachers { get; set; } = new();
 
+    private Teacher _selectedTeacher;
     public Teacher SelectedTeacher
     {
         get => _selectedTeacher;
@@ -21,24 +20,28 @@ public class TeacherViewModel : BaseViewModel
         {
             _selectedTeacher = value;
             OnPropertyChanged();
+            ((RelayCommand)UpdateTeacherCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)DeleteTeacherCommand).NotifyCanExecuteChanged();
         }
     }
 
-    public ICommand LoadTeachersCommand { get; }
-    public ICommand AddTeacherCommand { get; }
-    public ICommand UpdateTeacherCommand { get; }
-    public ICommand DeleteTeacherCommand { get; }
+    public RelayCommand LoadTeachersCommand { get; }
+    public RelayCommand AddTeacherCommand { get; }
+    public RelayCommand UpdateTeacherCommand { get; }
+    public RelayCommand DeleteTeacherCommand { get; }
 
     public TeacherViewModel(TeacherService teacherService)
     {
         _teacherService = teacherService;
-        LoadTeachersCommand = new RelayCommand(async () => await LoadTeachersAsync());
-        AddTeacherCommand = new RelayCommand(async () => await AddTeacherAsync());
-        UpdateTeacherCommand = new RelayCommand(async () => await UpdateTeacherAsync(), () => SelectedTeacher != null);
+        LoadTeachersCommand = new RelayCommand(async () => await LoadDataAsync());
+        AddTeacherCommand = new RelayCommand(AddTeacher);
+        UpdateTeacherCommand = new RelayCommand(UpdateTeacher, () => SelectedTeacher != null);
         DeleteTeacherCommand = new RelayCommand(async () => await DeleteTeacherAsync(), () => SelectedTeacher != null);
+
+        Task.Run(async () => await LoadDataAsync());
     }
 
-    public async Task LoadTeachersAsync()
+    public async Task LoadDataAsync()
     {
         Teachers.Clear();
         var teachers = await _teacherService.GetAllTeachersAsync();
@@ -48,19 +51,22 @@ public class TeacherViewModel : BaseViewModel
         }
     }
 
-    private async Task AddTeacherAsync()
+    private async void AddTeacher()
     {
-        var newTeacher = new Teacher { FirstName = "Новий", LastName = "Викладач", Email = "new@teacher.com", IsCurator = false };
-        await _teacherService.AddTeacherAsync(newTeacher);
-        await LoadTeachersAsync();
+        var newTeacher = new Teacher();
+        if (OpenTeacherDialog(newTeacher))
+        {
+            await _teacherService.AddTeacherAsync(newTeacher);
+            await LoadDataAsync();
+        }
     }
 
-    private async Task UpdateTeacherAsync()
+    private async void UpdateTeacher()
     {
-        if (SelectedTeacher != null)
+        if (SelectedTeacher != null && OpenTeacherDialog(SelectedTeacher))
         {
             await _teacherService.UpdateTeacherAsync(SelectedTeacher);
-            await LoadTeachersAsync();
+            await LoadDataAsync();
         }
     }
 
@@ -69,7 +75,23 @@ public class TeacherViewModel : BaseViewModel
         if (SelectedTeacher != null)
         {
             await _teacherService.DeleteTeacherAsync(SelectedTeacher.TeacherID);
-            await LoadTeachersAsync();
+            await LoadDataAsync();
         }
+    }
+
+    private bool OpenTeacherDialog(Teacher teacher)
+    {
+        var viewModel = new TeacherDialogViewModel(teacher);
+        var dialog = new TeacherDialog { DataContext = viewModel };
+
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
+        {
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
+        dialog.ShowDialog();
+        return isSaved;
     }
 }

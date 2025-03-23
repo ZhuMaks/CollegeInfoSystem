@@ -12,7 +12,7 @@
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding TeacherID}" Width="50"/>
                         <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="100"/>
                         <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="100"/>
-                        <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="150"/>
+                        <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="200"/>
                         <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding IsCurator}" Width="70"/>
                         <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="150"/>
                     </GridView>
