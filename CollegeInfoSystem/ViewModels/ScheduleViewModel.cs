@@ -1,19 +1,19 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
+using CollegeInfoSystem.ViewModels;
+using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
-namespace CollegeInfoSystem.ViewModels;
-
-public class ScheduleViewModel : BaseViewModel
+public class ScheduleViewModel : BaseViewModel, ILoadable
 {
     private readonly ScheduleService _scheduleService;
-    private Schedule _selectedSchedule;
+    private readonly GroupService _groupService;
+    private readonly TeacherService _teacherService;
 
     public ObservableCollection<Schedule> Schedules { get; set; } = new();
-
+    private Schedule _selectedSchedule;
     public Schedule SelectedSchedule
     {
         get => _selectedSchedule;
@@ -21,24 +21,31 @@ public class ScheduleViewModel : BaseViewModel
         {
             _selectedSchedule = value;
             OnPropertyChanged();
+            ((RelayCommand)UpdateScheduleCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)DeleteScheduleCommand).NotifyCanExecuteChanged();
         }
     }
 
-    public ICommand LoadSchedulesCommand { get; }
-    public ICommand AddScheduleCommand { get; }
-    public ICommand UpdateScheduleCommand { get; }
-    public ICommand DeleteScheduleCommand { get; }
+    public RelayCommand LoadSchedulesCommand { get; }
+    public RelayCommand AddScheduleCommand { get; }
+    public RelayCommand UpdateScheduleCommand { get; }
+    public RelayCommand DeleteScheduleCommand { get; }
 
-    public ScheduleViewModel(ScheduleService scheduleService)
+    public ScheduleViewModel(ScheduleService scheduleService, GroupService groupService, TeacherService teacherService)
     {
         _scheduleService = scheduleService;
-        LoadSchedulesCommand = new RelayCommand(async () => await LoadSchedulesAsync());
-        AddScheduleCommand = new RelayCommand(async () => await AddScheduleAsync());
-        UpdateScheduleCommand = new RelayCommand(async () => await UpdateScheduleAsync(), () => SelectedSchedule != null);
+        _groupService = groupService;
+        _teacherService = teacherService;
+
+        LoadSchedulesCommand = new RelayCommand(async () => await LoadDataAsync());
+        AddScheduleCommand = new RelayCommand(AddSchedule);
+        UpdateScheduleCommand = new RelayCommand(UpdateSchedule, () => SelectedSchedule != null);
         DeleteScheduleCommand = new RelayCommand(async () => await DeleteScheduleAsync(), () => SelectedSchedule != null);
+
+        Task.Run(async () => await LoadDataAsync());
     }
 
-    public async Task LoadSchedulesAsync()
+    public async Task LoadDataAsync()
     {
         Schedules.Clear();
         var schedules = await _scheduleService.GetAllSchedulesAsync();
@@ -48,29 +55,22 @@ public class ScheduleViewModel : BaseViewModel
         }
     }
 
-    private async Task AddScheduleAsync()
+    private async void AddSchedule()
     {
-        var newSchedule = new Schedule
+        var newSchedule = new Schedule();
+        if (OpenScheduleDialog(newSchedule))
         {
-            GroupID = 1,
-            TeacherID = 1,
-            Subject = "Новий предмет",
-            DayOfWeek = "Monday",
-            StartTime = TimeSpan.Parse("08:00"), 
-            EndTime = TimeSpan.Parse("09:30"),   
-            Room = "101"
-        };
-        await _scheduleService.AddScheduleAsync(newSchedule);
-        await LoadSchedulesAsync();
+            await _scheduleService.AddScheduleAsync(newSchedule);
+            await LoadDataAsync();
+        }
     }
 
-
-    private async Task UpdateScheduleAsync()
+    private async void UpdateSchedule()
     {
-        if (SelectedSchedule != null)
+        if (SelectedSchedule != null && OpenScheduleDialog(SelectedSchedule))
         {
             await _scheduleService.UpdateScheduleAsync(SelectedSchedule);
-            await LoadSchedulesAsync();
+            await LoadDataAsync();
         }
     }
 
@@ -79,7 +79,23 @@ public class ScheduleViewModel : BaseViewModel
         if (SelectedSchedule != null)
         {
             await _scheduleService.DeleteScheduleAsync(SelectedSchedule.ScheduleID);
-            await LoadSchedulesAsync();
+            await LoadDataAsync();
         }
+    }
+
+    private bool OpenScheduleDialog(Schedule schedule)
+    {
+        var viewModel = new ScheduleDialogViewModel(schedule, _groupService, _teacherService);
+        var dialog = new ScheduleDialog { DataContext = viewModel };
+
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
+        {
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
+        dialog.ShowDialog();
+        return isSaved;
     }
 }

@@ -1,0 +1,34 @@
+﻿<Window x:Class="CollegeInfoSystem.Views.ScheduleDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Додати/Редагувати Розклад" Height="400" Width="400" WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <StackPanel>
+            <TextBlock Text="Група:" />
+            <ComboBox ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" DisplayMemberPath="GroupName" />
+
+            <TextBlock Text="Викладач:" />
+            <ComboBox ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}" DisplayMemberPath="FullName" />
+
+            <TextBlock Text="Предмет:" />
+            <TextBox Text="{Binding Subject}" />
+
+            <TextBlock Text="День тижня:" />
+            <TextBox Text="{Binding DayOfWeek}" />
+
+            <TextBlock Text="Час початку:" />
+            <TextBox Text="{Binding StartTime}" />
+
+            <TextBlock Text="Час завершення:" />
+            <TextBox Text="{Binding EndTime}" />
+
+            <TextBlock Text="Аудиторія:" />
+            <TextBox Text="{Binding Room}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                <Button Content="Зберегти" Command="{Binding SaveCommand}" Width="100" Margin="5"/>
+                <Button Content="Скасувати" Command="{Binding CancelCommand}" Width="100" Margin="5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
