@@ -2,6 +2,7 @@
 using CollegeInfoSystem.ViewModels;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Windows;
 
 public class TeacherDialogViewModel : BaseViewModel
 {
@@ -80,8 +81,22 @@ public class TeacherDialogViewModel : BaseViewModel
         CancelCommand = new RelayCommand(Cancel);
     }
 
+    private bool ValidateFields()
+    {
+        return !string.IsNullOrWhiteSpace(FirstName) &&
+               !string.IsNullOrWhiteSpace(LastName) &&
+               !string.IsNullOrWhiteSpace(Email) &&
+               !string.IsNullOrWhiteSpace(Phone);
+    }
+
     private void Save()
     {
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Усі поля мають бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         IsSaved = true;
         CloseAction?.Invoke();
     }

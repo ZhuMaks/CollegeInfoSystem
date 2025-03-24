@@ -6,6 +6,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 public class StudentDialogViewModel : BaseViewModel
 {
@@ -119,8 +120,24 @@ public class StudentDialogViewModel : BaseViewModel
         Groups = new ObservableCollection<Group>(groups);
     }
 
+    private bool ValidateFields()
+    {
+        return !string.IsNullOrWhiteSpace(FirstName) &&
+               !string.IsNullOrWhiteSpace(LastName) &&
+               !string.IsNullOrWhiteSpace(Email) &&
+               !string.IsNullOrWhiteSpace(Phone) &&
+               !string.IsNullOrWhiteSpace(Address) &&
+               SelectedGroup != null;
+    }
+
     private void Save()
     {
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Усі поля мають бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         IsSaved = true;
         CloseAction?.Invoke();
     }

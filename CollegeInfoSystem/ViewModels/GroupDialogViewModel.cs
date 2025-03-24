@@ -6,6 +6,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 public class GroupDialogViewModel : BaseViewModel
 {
@@ -79,12 +80,22 @@ public class GroupDialogViewModel : BaseViewModel
         var teachers = await _teacherService.GetAllTeachersAsync();
 
         Faculties = new ObservableCollection<Faculty>(faculties);
-        Teachers = new ObservableCollection<Teacher>(teachers.Where(t => t.IsCurator)); // Фільтрація лише кураторів
+        Teachers = new ObservableCollection<Teacher>(teachers.Where(t => t.IsCurator));
     }
 
+    private bool ValidateFields()
+    {
+        return !string.IsNullOrWhiteSpace(GroupName) && SelectedFaculty != null;
+    }
 
     private void Save()
     {
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Назва групи та факультет повинні бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         IsSaved = true;
         CloseAction?.Invoke();
     }

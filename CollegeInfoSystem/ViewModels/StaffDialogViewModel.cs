@@ -1,6 +1,7 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.ViewModels;
 using CommunityToolkit.Mvvm.Input;
+using System.Windows;
 
 public class StaffDialogViewModel : BaseViewModel
 {
@@ -8,7 +9,7 @@ public class StaffDialogViewModel : BaseViewModel
     private Staff _originalStaff;
 
     public Action CloseAction { get; set; }
-    public bool IsSaved { get; private set; } = false; // Флаг для перевірки
+    public bool IsSaved { get; private set; } = false;
 
     public Staff Staff
     {
@@ -87,23 +88,33 @@ public class StaffDialogViewModel : BaseViewModel
 
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
+    }
 
-        FirstName = staff.FirstName;
-        LastName = staff.LastName;
-        Position = staff.Position;
-        Email = staff.Email;
-        Phone = staff.Phone;
+    private bool ValidateFields()
+    {
+        return !string.IsNullOrWhiteSpace(FirstName) &&
+               !string.IsNullOrWhiteSpace(LastName) &&
+               !string.IsNullOrWhiteSpace(Position) &&
+               !string.IsNullOrWhiteSpace(Email) &&
+               !string.IsNullOrWhiteSpace(Phone);
     }
 
     public void Save()
     {
-        IsSaved = true; // Вказуємо, що дані збережені
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Всі поля повинні бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        IsSaved = true;
         CloseAction?.Invoke();
     }
 
     public void Cancel()
     {
-        IsSaved = false; // Вказуємо, що відмінили зміни
+        IsSaved = false;
+
         _staff.FirstName = _originalStaff.FirstName;
         _staff.LastName = _originalStaff.LastName;
         _staff.Position = _originalStaff.Position;

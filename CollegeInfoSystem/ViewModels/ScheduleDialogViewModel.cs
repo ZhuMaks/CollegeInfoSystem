@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows;
 
 public class ScheduleDialogViewModel : BaseViewModel
 {
@@ -109,8 +110,25 @@ public class ScheduleDialogViewModel : BaseViewModel
         Teachers = new ObservableCollection<Teacher>(await _teacherService.GetAllTeachersAsync());
     }
 
+    private bool ValidateFields()
+    {
+        return SelectedGroup != null &&
+               SelectedTeacher != null &&
+               !string.IsNullOrWhiteSpace(Subject) &&
+               !string.IsNullOrWhiteSpace(DayOfWeek) &&
+               StartTime != default &&
+               EndTime != default &&
+               !string.IsNullOrWhiteSpace(Room);
+    }
+
     private void Save()
     {
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Усі поля мають бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         IsSaved = true;
         CloseAction?.Invoke();
     }

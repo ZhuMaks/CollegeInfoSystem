@@ -1,6 +1,8 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.ViewModels;
 using CommunityToolkit.Mvvm.Input;
+using System;
+using System.Windows;
 
 public class FacultyDialogViewModel : BaseViewModel
 {
@@ -8,7 +10,7 @@ public class FacultyDialogViewModel : BaseViewModel
     private Faculty _originalFaculty;
 
     public Action CloseAction { get; set; }
-    public bool IsSaved { get; private set; } = false; // Флаг для перевірки
+    public bool IsSaved { get; private set; } = false;
 
     public Faculty Faculty
     {
@@ -45,15 +47,27 @@ public class FacultyDialogViewModel : BaseViewModel
         CancelCommand = new RelayCommand(Cancel);
     }
 
+    private bool ValidateFields()
+    {
+        return !string.IsNullOrWhiteSpace(FacultyName);
+    }
+
     private void Save()
     {
-        IsSaved = true; // Позначаємо, що дані збережені
+        if (!ValidateFields())
+        {
+            MessageBox.Show("Назва факультету не може бути порожньою!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        IsSaved = true;
         CloseAction?.Invoke();
     }
 
     private void Cancel()
     {
-        IsSaved = false; // Позначаємо, що відмінили
+        IsSaved = false;
+        FacultyName = _originalFaculty.FacultyName;
         CloseAction?.Invoke();
     }
 }
