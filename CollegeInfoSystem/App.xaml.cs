@@ -14,27 +14,25 @@ namespace CollegeInfoSystem
             var dbContext = new CollegeDbContext();
 
             var studentService = new StudentService(dbContext);
-            var studentViewModel = new StudentViewModel(studentService);
-
             var teacherService = new TeacherService(dbContext);
-            var teacherViewModel = new TeacherViewModel(teacherService);
-
+            var facultyService = new FacultyService(dbContext);
             var groupService = new GroupService(dbContext);
-            var groupViewModel = new GroupViewModel(groupService);
-
             var scheduleService = new ScheduleService(dbContext);
+            var staffService = new StaffService(dbContext);
+
+            var studentViewModel = new StudentViewModel(studentService);
+            var teacherViewModel = new TeacherViewModel(teacherService);
+            var facultyViewModel = new FacultyViewModel(facultyService);
+            var staffViewModel = new StaffViewModel(staffService);
             var scheduleViewModel = new ScheduleViewModel(scheduleService);
 
-            var facultyService = new FacultyService(dbContext);
-            var facultyViewModel = new FacultyViewModel(facultyService);
-
-            var staffService = new StaffService(dbContext);
-            var staffViewModel = new StaffViewModel(staffService);
+            var groupViewModel = new GroupViewModel(groupService, facultyService, teacherService, studentService);
 
             var mainViewModel = new MainViewModel(studentViewModel, teacherViewModel, groupViewModel, scheduleViewModel, facultyViewModel, staffViewModel);
             var mainWindow = new MainWindow { DataContext = mainViewModel };
 
             mainWindow.Show();
         }
+
     }
 }

@@ -1,29 +1,22 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
+using CollegeInfoSystem.ViewModels;
+using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
-namespace CollegeInfoSystem.ViewModels;
-
-public class GroupViewModel : BaseViewModel
+public class GroupViewModel : BaseViewModel, ILoadable
 {
     private readonly GroupService _groupService;
-    private Group _selectedGroup;
-    private ObservableCollection<Student> _studentsInGroup = new();
+    private readonly FacultyService _facultyService;
+    private readonly TeacherService _teacherService;
+    private readonly StudentService _studentService;
 
     public ObservableCollection<Group> Groups { get; set; } = new();
-    public ObservableCollection<Student> StudentsInGroup
-    {
-        get => _studentsInGroup;
-        set
-        {
-            _studentsInGroup = value;
-            OnPropertyChanged();
-        }
-    }
+    public ObservableCollection<Student> StudentsInGroup { get; set; } = new();
 
+    private Group _selectedGroup;
     public Group SelectedGroup
     {
         get => _selectedGroup;
@@ -31,25 +24,33 @@ public class GroupViewModel : BaseViewModel
         {
             _selectedGroup = value;
             OnPropertyChanged();
-            LoadStudentsAsync();
+            ((RelayCommand)UpdateGroupCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)DeleteGroupCommand).NotifyCanExecuteChanged();
+            LoadStudentsInGroup();
         }
     }
 
-    public ICommand LoadGroupsCommand { get; }
-    public ICommand AddGroupCommand { get; }
-    public ICommand UpdateGroupCommand { get; }
-    public ICommand DeleteGroupCommand { get; }
+    public RelayCommand LoadGroupsCommand { get; }
+    public RelayCommand AddGroupCommand { get; }
+    public RelayCommand UpdateGroupCommand { get; }
+    public RelayCommand DeleteGroupCommand { get; }
 
-    public GroupViewModel(GroupService groupService)
+    public GroupViewModel(GroupService groupService, FacultyService facultyService, TeacherService teacherService, StudentService studentService)
     {
         _groupService = groupService;
-        LoadGroupsCommand = new RelayCommand(async () => await LoadGroupsAsync());
-        AddGroupCommand = new RelayCommand(async () => await AddGroupAsync());
-        UpdateGroupCommand = new RelayCommand(async () => await UpdateGroupAsync(), () => SelectedGroup != null);
+        _facultyService = facultyService;
+        _teacherService = teacherService;
+        _studentService = studentService;
+
+        LoadGroupsCommand = new RelayCommand(async () => await LoadDataAsync());
+        AddGroupCommand = new RelayCommand(AddGroup);
+        UpdateGroupCommand = new RelayCommand(UpdateGroup, () => SelectedGroup != null);
         DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), () => SelectedGroup != null);
+
+        Task.Run(async () => await LoadDataAsync());
     }
 
-    public async Task LoadGroupsAsync()
+    public async Task LoadDataAsync()
     {
         Groups.Clear();
         var groups = await _groupService.GetAllGroupsAsync();
@@ -59,19 +60,35 @@ public class GroupViewModel : BaseViewModel
         }
     }
 
-    private async Task AddGroupAsync()
+    private async void LoadStudentsInGroup()
     {
-        var newGroup = new Group { GroupName = "Нова група", FacultyID = 1, CuratorID = null };
-        await _groupService.AddGroupAsync(newGroup);
-        await LoadGroupsAsync();
-    }
-
-    private async Task UpdateGroupAsync()
-    {
+        StudentsInGroup.Clear();
         if (SelectedGroup != null)
         {
+            var students = await _studentService.GetStudentsByGroupAsync(SelectedGroup.GroupID);
+            foreach (var student in students)
+            {
+                StudentsInGroup.Add(student);
+            }
+        }
+    }
+
+    private async void AddGroup()
+    {
+        var newGroup = new Group();
+        if (OpenGroupDialog(newGroup))
+        {
+            await _groupService.AddGroupAsync(newGroup);
+            await LoadDataAsync();
+        }
+    }
+
+    private async void UpdateGroup()
+    {
+        if (SelectedGroup != null && OpenGroupDialog(SelectedGroup))
+        {
             await _groupService.UpdateGroupAsync(SelectedGroup);
-            await LoadGroupsAsync();
+            await LoadDataAsync();
         }
     }
 
@@ -80,16 +97,23 @@ public class GroupViewModel : BaseViewModel
         if (SelectedGroup != null)
         {
             await _groupService.DeleteGroupAsync(SelectedGroup.GroupID);
-            await LoadGroupsAsync();
+            await LoadDataAsync();
         }
     }
 
-    private async Task LoadStudentsAsync()
+    private bool OpenGroupDialog(Group group)
     {
-        if (SelectedGroup != null)
+        var viewModel = new GroupDialogViewModel(group, _facultyService, _teacherService);
+        var dialog = new GroupDialog { DataContext = viewModel };
+
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
         {
-            var students = await _groupService.GetStudentsByGroupAsync(SelectedGroup.GroupID);
-            StudentsInGroup = new ObservableCollection<Student>(students);
-        }
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
+        dialog.ShowDialog();
+        return isSaved;
     }
 }
