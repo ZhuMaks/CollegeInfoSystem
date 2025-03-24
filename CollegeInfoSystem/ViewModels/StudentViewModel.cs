@@ -1,19 +1,18 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
+using CollegeInfoSystem.ViewModels;
+using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
-namespace CollegeInfoSystem.ViewModels;
-
-public class StudentViewModel : BaseViewModel
+public class StudentViewModel : BaseViewModel, ILoadable
 {
     private readonly StudentService _studentService;
-    private Student _selectedStudent;
+    private readonly GroupService _groupService;
 
     public ObservableCollection<Student> Students { get; set; } = new();
-
+    private Student _selectedStudent;
     public Student SelectedStudent
     {
         get => _selectedStudent;
@@ -21,24 +20,30 @@ public class StudentViewModel : BaseViewModel
         {
             _selectedStudent = value;
             OnPropertyChanged();
+            ((RelayCommand)UpdateStudentCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)DeleteStudentCommand).NotifyCanExecuteChanged();
         }
     }
 
-    public ICommand LoadStudentsCommand { get; }
-    public ICommand AddStudentCommand { get; }
-    public ICommand UpdateStudentCommand { get; }
-    public ICommand DeleteStudentCommand { get; }
+    public RelayCommand LoadStudentsCommand { get; }
+    public RelayCommand AddStudentCommand { get; }
+    public RelayCommand UpdateStudentCommand { get; }
+    public RelayCommand DeleteStudentCommand { get; }
 
-    public StudentViewModel(StudentService studentService)
+    public StudentViewModel(StudentService studentService, GroupService groupService)
     {
         _studentService = studentService;
-        LoadStudentsCommand = new RelayCommand(async () => await LoadStudentsAsync());
-        AddStudentCommand = new RelayCommand(async () => await AddStudentAsync());
-        UpdateStudentCommand = new RelayCommand(async () => await UpdateStudentAsync(), () => SelectedStudent != null);
+        _groupService = groupService;
+
+        LoadStudentsCommand = new RelayCommand(async () => await LoadDataAsync());
+        AddStudentCommand = new RelayCommand(AddStudent);
+        UpdateStudentCommand = new RelayCommand(UpdateStudent, () => SelectedStudent != null);
         DeleteStudentCommand = new RelayCommand(async () => await DeleteStudentAsync(), () => SelectedStudent != null);
+
+        Task.Run(async () => await LoadDataAsync());
     }
 
-    public async Task LoadStudentsAsync()
+    public async Task LoadDataAsync()
     {
         Students.Clear();
         var students = await _studentService.GetAllStudentsAsync();
@@ -48,19 +53,22 @@ public class StudentViewModel : BaseViewModel
         }
     }
 
-    private async Task AddStudentAsync()
+    private async void AddStudent()
     {
-        var newStudent = new Student { FirstName = "Новий", LastName = "Студент", GroupID = 1, Email = "new@email.com" };
-        await _studentService.AddStudentAsync(newStudent);
-        await LoadStudentsAsync();
+        var newStudent = new Student();
+        if (OpenStudentDialog(newStudent))
+        {
+            await _studentService.AddStudentAsync(newStudent);
+            await LoadDataAsync();
+        }
     }
 
-    private async Task UpdateStudentAsync()
+    private async void UpdateStudent()
     {
-        if (SelectedStudent != null)
+        if (SelectedStudent != null && OpenStudentDialog(SelectedStudent))
         {
             await _studentService.UpdateStudentAsync(SelectedStudent);
-            await LoadStudentsAsync();
+            await LoadDataAsync();
         }
     }
 
@@ -69,7 +77,23 @@ public class StudentViewModel : BaseViewModel
         if (SelectedStudent != null)
         {
             await _studentService.DeleteStudentAsync(SelectedStudent.StudentID);
-            await LoadStudentsAsync();
+            await LoadDataAsync();
         }
+    }
+
+    private bool OpenStudentDialog(Student student)
+    {
+        var viewModel = new StudentDialogViewModel(student, _groupService);
+        var dialog = new StudentDialog { DataContext = viewModel };
+
+        bool isSaved = false;
+        viewModel.CloseAction = () =>
+        {
+            isSaved = viewModel.IsSaved;
+            dialog.Close();
+        };
+
+        dialog.ShowDialog();
+        return isSaved;
     }
 }
