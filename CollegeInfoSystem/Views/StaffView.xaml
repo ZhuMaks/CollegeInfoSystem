@@ -6,6 +6,21 @@
              mc:Ignorable="d">
     <Grid>
         <StackPanel>
+
+            <!-- 🔍 Панель фільтрів -->
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <StackPanel Margin="5">
+                    <TextBlock Text="Прізвище"/>
+                    <TextBox Width="150" Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Посада"/>
+                    <TextBox Width="150" Text="{Binding PositionFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
+            </StackPanel>
+
+            <!-- 📋 Таблиця працівників -->
             <ListView ItemsSource="{Binding StaffList}" SelectedItem="{Binding SelectedStaff}">
                 <ListView.View>
                     <GridView>
@@ -19,6 +34,7 @@
                 </ListView.View>
             </ListView>
 
+            <!-- 🔘 Кнопки керування -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                 <Button Content="Додати" Command="{Binding AddStaffCommand}" Width="100" Margin="5"/>
                 <Button Content="Оновити" Command="{Binding UpdateStaffCommand}" Width="100" Margin="5"/>

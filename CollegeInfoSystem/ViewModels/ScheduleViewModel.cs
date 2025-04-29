@@ -5,6 +5,8 @@ using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Windows.Input;
 
 public class ScheduleViewModel : BaseViewModel, ILoadable
 {
@@ -13,6 +15,69 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     private readonly TeacherService _teacherService;
 
     public ObservableCollection<Schedule> Schedules { get; set; } = new();
+    private List<Schedule> _allSchedules = new();
+
+    public ObservableCollection<string> DaysOfWeek { get; } = new(new[] { "", "Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя" });
+    public ObservableCollection<Group> Groups { get; } = new();
+    public ObservableCollection<Teacher> Teachers { get; } = new();
+
+    private Group _selectedGroup;
+    public Group SelectedGroup
+    {
+        get => _selectedGroup;
+        set
+        {
+            _selectedGroup = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    private Teacher _selectedTeacher;
+    public Teacher SelectedTeacher
+    {
+        get => _selectedTeacher;
+        set
+        {
+            _selectedTeacher = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    private string _selectedDay;
+    public string SelectedDay
+    {
+        get => _selectedDay;
+        set
+        {
+            _selectedDay = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    public ScheduleViewModel(ScheduleService scheduleService, GroupService groupService, TeacherService teacherService)
+    {
+        _scheduleService = scheduleService;
+        _groupService = groupService;
+        _teacherService = teacherService;
+
+        LoadSchedulesCommand = new RelayCommand(async () => await LoadDataAsync());
+        AddScheduleCommand = new RelayCommand(AddSchedule);
+        UpdateScheduleCommand = new RelayCommand(UpdateSchedule, () => SelectedSchedule != null);
+        DeleteScheduleCommand = new RelayCommand(async () => await DeleteScheduleAsync(), () => SelectedSchedule != null);
+        ClearFiltersCommand = new RelayCommand(ClearFilters);
+
+        Task.Run(async () => await LoadDataAsync());
+    }
+
+    public RelayCommand LoadSchedulesCommand { get; }
+    public RelayCommand AddScheduleCommand { get; }
+    public RelayCommand UpdateScheduleCommand { get; }
+    public RelayCommand DeleteScheduleCommand { get; }
+    public RelayCommand ClearFiltersCommand { get; }
+
     private Schedule _selectedSchedule;
     public Schedule SelectedSchedule
     {
@@ -26,33 +91,48 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         }
     }
 
-    public RelayCommand LoadSchedulesCommand { get; }
-    public RelayCommand AddScheduleCommand { get; }
-    public RelayCommand UpdateScheduleCommand { get; }
-    public RelayCommand DeleteScheduleCommand { get; }
-
-    public ScheduleViewModel(ScheduleService scheduleService, GroupService groupService, TeacherService teacherService)
-    {
-        _scheduleService = scheduleService;
-        _groupService = groupService;
-        _teacherService = teacherService;
-
-        LoadSchedulesCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddScheduleCommand = new RelayCommand(AddSchedule);
-        UpdateScheduleCommand = new RelayCommand(UpdateSchedule, () => SelectedSchedule != null);
-        DeleteScheduleCommand = new RelayCommand(async () => await DeleteScheduleAsync(), () => SelectedSchedule != null);
-
-        Task.Run(async () => await LoadDataAsync());
-    }
-
     public async Task LoadDataAsync()
     {
-        Schedules.Clear();
         var schedules = await _scheduleService.GetAllSchedulesAsync();
-        foreach (var schedule in schedules)
-        {
-            Schedules.Add(schedule);
-        }
+        var groups = await _groupService.GetAllGroupsAsync();
+        var teachers = await _teacherService.GetAllTeachersAsync();
+
+        _allSchedules = schedules.ToList();
+
+        Groups.Clear();
+        foreach (var group in groups)
+            Groups.Add(group);
+
+        Teachers.Clear();
+        foreach (var teacher in teachers)
+            Teachers.Add(teacher);
+
+        ApplyFilters();
+    }
+
+    private void ClearFilters()
+    {
+        SelectedGroup = null;
+        SelectedTeacher = null;
+        SelectedDay = null;
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = _allSchedules.AsEnumerable();
+
+        if (SelectedGroup != null)
+            filtered = filtered.Where(s => s.Group?.GroupID == SelectedGroup.GroupID);
+
+        if (SelectedTeacher != null)
+            filtered = filtered.Where(s => s.Teacher?.TeacherID == SelectedTeacher.TeacherID);
+
+        if (!string.IsNullOrEmpty(SelectedDay))
+            filtered = filtered.Where(s => s.DayOfWeek == SelectedDay);
+
+        Schedules.Clear();
+        foreach (var s in filtered)
+            Schedules.Add(s);
     }
 
     private async void AddSchedule()

@@ -4,6 +4,9 @@ using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 public class GroupViewModel : BaseViewModel, ILoadable
@@ -12,6 +15,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
     private readonly FacultyService _facultyService;
     private readonly TeacherService _teacherService;
     private readonly StudentService _studentService;
+
+    private List<Group> _allGroups;
 
     public ObservableCollection<Group> Groups { get; set; } = new();
     public ObservableCollection<Student> StudentsInGroup { get; set; } = new();
@@ -30,10 +35,47 @@ public class GroupViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private string _groupNameFilter;
+    public string GroupNameFilter
+    {
+        get => _groupNameFilter;
+        set
+        {
+            _groupNameFilter = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    private string _facultyFilter;
+    public string FacultyFilter
+    {
+        get => _facultyFilter;
+        set
+        {
+            _facultyFilter = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    private string _curatorFilter;
+    public string CuratorFilter
+    {
+        get => _curatorFilter;
+        set
+        {
+            _curatorFilter = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
     public RelayCommand LoadGroupsCommand { get; }
     public RelayCommand AddGroupCommand { get; }
     public RelayCommand UpdateGroupCommand { get; }
     public RelayCommand DeleteGroupCommand { get; }
+    public RelayCommand ClearFiltersCommand { get; }
 
     public GroupViewModel(GroupService groupService, FacultyService facultyService, TeacherService teacherService, StudentService studentService)
     {
@@ -46,6 +88,7 @@ public class GroupViewModel : BaseViewModel, ILoadable
         AddGroupCommand = new RelayCommand(AddGroup);
         UpdateGroupCommand = new RelayCommand(UpdateGroup, () => SelectedGroup != null);
         DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), () => SelectedGroup != null);
+        ClearFiltersCommand = new RelayCommand(ClearFilters);
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -53,11 +96,33 @@ public class GroupViewModel : BaseViewModel, ILoadable
     public async Task LoadDataAsync()
     {
         Groups.Clear();
-        var groups = await _groupService.GetAllGroupsAsync();
-        foreach (var group in groups)
-        {
+        _allGroups = (await _groupService.GetAllGroupsAsync()).ToList();
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = _allGroups.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(GroupNameFilter))
+            filtered = filtered.Where(g => g.GroupName.Contains(GroupNameFilter, System.StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(FacultyFilter))
+            filtered = filtered.Where(g => g.Faculty?.FacultyName?.Contains(FacultyFilter, System.StringComparison.OrdinalIgnoreCase) == true);
+
+        if (!string.IsNullOrWhiteSpace(CuratorFilter))
+            filtered = filtered.Where(g => g.Curator?.FullName?.Contains(CuratorFilter, System.StringComparison.OrdinalIgnoreCase) == true);
+
+        Groups.Clear();
+        foreach (var group in filtered)
             Groups.Add(group);
-        }
+    }
+
+    private void ClearFilters()
+    {
+        GroupNameFilter = string.Empty;
+        FacultyFilter = string.Empty;
+        CuratorFilter = string.Empty;
     }
 
     private async void LoadStudentsInGroup()

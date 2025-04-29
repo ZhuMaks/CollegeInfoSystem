@@ -4,10 +4,14 @@ using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 public class StaffViewModel : BaseViewModel, ILoadable
 {
     private readonly StaffService _staffService;
+
+    private List<Staff> _allStaff;
 
     public ObservableCollection<Staff> StaffList { get; set; } = new();
 
@@ -24,10 +28,35 @@ public class StaffViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private string _lastNameFilter;
+    public string LastNameFilter
+    {
+        get => _lastNameFilter;
+        set
+        {
+            _lastNameFilter = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    private string _positionFilter;
+    public string PositionFilter
+    {
+        get => _positionFilter;
+        set
+        {
+            _positionFilter = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
     public RelayCommand LoadStaffCommand { get; }
     public RelayCommand AddStaffCommand { get; }
     public RelayCommand UpdateStaffCommand { get; }
     public RelayCommand DeleteStaffCommand { get; }
+    public RelayCommand ClearFiltersCommand { get; }
 
     public StaffViewModel(StaffService staffService)
     {
@@ -36,18 +65,38 @@ public class StaffViewModel : BaseViewModel, ILoadable
         AddStaffCommand = new RelayCommand(AddStaff);
         UpdateStaffCommand = new RelayCommand(UpdateStaff, () => SelectedStaff != null);
         DeleteStaffCommand = new RelayCommand(async () => await DeleteStaffAsync(), () => SelectedStaff != null);
+        ClearFiltersCommand = new RelayCommand(ClearFilters);
 
         Task.Run(async () => await LoadDataAsync());
     }
 
     public async Task LoadDataAsync()
     {
+        _allStaff = (await _staffService.GetAllStaffAsync()).ToList();
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = _allStaff.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(LastNameFilter))
+            filtered = filtered.Where(s => s.LastName.Contains(LastNameFilter, System.StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(PositionFilter))
+            filtered = filtered.Where(s => s.Position.Contains(PositionFilter, System.StringComparison.OrdinalIgnoreCase));
+
         StaffList.Clear();
-        var staffMembers = await _staffService.GetAllStaffAsync();
-        foreach (var staff in staffMembers)
+        foreach (var staff in filtered)
         {
             StaffList.Add(staff);
         }
+    }
+
+    private void ClearFilters()
+    {
+        LastNameFilter = string.Empty;
+        PositionFilter = string.Empty;
     }
 
     private async void AddStaff()
@@ -65,7 +114,6 @@ public class StaffViewModel : BaseViewModel, ILoadable
         if (SelectedStaff != null)
         {
             OpenStaffDialog(SelectedStaff);
-
             await _staffService.UpdateStaffAsync(SelectedStaff);
             await LoadDataAsync();
         }

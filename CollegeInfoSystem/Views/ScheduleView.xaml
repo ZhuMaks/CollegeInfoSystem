@@ -6,6 +6,28 @@
              mc:Ignorable="d">
     <Grid>
         <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <ComboBox Width="150" Margin="5"
+              ItemsSource="{Binding Groups}"
+              DisplayMemberPath="GroupName"
+              SelectedItem="{Binding SelectedGroup}"
+              ToolTip="Фільтр за групою"/>
+                <ComboBox Width="150" Margin="5"
+              ItemsSource="{Binding Teachers}"
+              DisplayMemberPath="FullName"
+              SelectedItem="{Binding SelectedTeacher}"
+              ToolTip="Фільтр за викладачем"/>
+                <ComboBox Width="150" Margin="5"
+              ItemsSource="{Binding DaysOfWeek}"
+              SelectedItem="{Binding SelectedDay}"
+              ToolTip="Фільтр за днем тижня"/>
+                <Button Content="Скинути фільтри"
+            Command="{Binding ClearFiltersCommand}"
+            Width="130"
+            Margin="5"/>
+            </StackPanel>
+
+
             <ListView ItemsSource="{Binding Schedules}" SelectedItem="{Binding SelectedSchedule}">
                 <ListView.View>
                     <GridView>
@@ -18,9 +40,9 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock>
-                <Run Text="{Binding StartTime, StringFormat={}{0:hh\\:mm}}"/>
-                <Run Text=" - "/>
-                <Run Text="{Binding EndTime, StringFormat={}{0:hh\\:mm}}"/>
+                                    <Run Text="{Binding StartTime, StringFormat={}{0:hh\\:mm}}"/>
+                                    <Run Text=" - "/>
+                                    <Run Text="{Binding EndTime, StringFormat={}{0:hh\\:mm}}"/>
                                     </TextBlock>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -37,4 +59,5 @@
             </StackPanel>
         </StackPanel>
     </Grid>
+
 </UserControl>

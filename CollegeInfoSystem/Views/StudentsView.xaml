@@ -1,11 +1,25 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.StudentsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
         <StackPanel>
+
+            <!-- Пошук і фільтр -->
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <TextBox Width="200" Margin="5"
+             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+             ToolTip="Пошук за ID або прізвищем"/>
+
+                <ComboBox Width="200" Margin="5"
+              ItemsSource="{Binding Groups}" 
+              DisplayMemberPath="GroupName"
+              SelectedItem="{Binding SelectedGroup}"
+              ToolTip="Виберіть групу"/>
+
+                <Button Content="Очистити фільтр" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
+            </StackPanel>
+
+
             <ListView ItemsSource="{Binding Students}" SelectedItem="{Binding SelectedStudent}">
                 <ListView.View>
                     <GridView>

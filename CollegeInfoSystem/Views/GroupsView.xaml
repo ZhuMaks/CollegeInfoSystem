@@ -6,6 +6,25 @@
              mc:Ignorable="d">
     <Grid>
         <StackPanel>
+
+            <!-- 🔍 Панель фільтрів -->
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <StackPanel Margin="5">
+                    <TextBlock Text="Назва групи"/>
+                    <TextBox Width="120" Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Факультет"/>
+                    <TextBox Width="120" Text="{Binding FacultyFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Margin="5">
+                    <TextBlock Text="Куратор"/>
+                    <TextBox Width="120" Text="{Binding CuratorFilter, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
+            </StackPanel>
+
+            <!-- 📋 Список груп -->
             <ListView ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}">
                 <ListView.View>
                     <GridView>
@@ -17,12 +36,14 @@
                 </ListView.View>
             </ListView>
 
+            <!-- Кнопки CRUD -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                 <Button Content="Додати" Command="{Binding AddGroupCommand}" Width="100" Margin="5"/>
                 <Button Content="Оновити" Command="{Binding UpdateGroupCommand}" Width="100" Margin="5"/>
                 <Button Content="Видалити" Command="{Binding DeleteGroupCommand}" Width="100" Margin="5"/>
             </StackPanel>
 
+            <!-- Студенти групи -->
             <TextBlock Text="Студенти в групі" FontWeight="Bold" Margin="10"/>
             <ListView ItemsSource="{Binding StudentsInGroup}">
                 <ListView.View>

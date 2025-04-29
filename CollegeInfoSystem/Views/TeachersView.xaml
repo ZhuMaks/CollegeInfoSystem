@@ -4,8 +4,27 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d">
-    <Grid>
+    <Grid Margin="10">
         <StackPanel>
+            <!-- Поля фільтрації -->
+            <StackPanel Orientation="Horizontal" Margin="0 0 0 10" HorizontalAlignment="Left">
+                <TextBox Width="200"
+             Margin="5"
+             VerticalAlignment="Center"
+             Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}" 
+             ToolTip="Пошук за прізвищем" />
+                <CheckBox Content="Лише куратори"
+              VerticalAlignment="Center"
+              IsChecked="{Binding IsCuratorOnly}" 
+              Margin="5"/>
+                <Button Content="Очистити фільтр"
+            Command="{Binding ClearFilterCommand}"
+            Margin="5"
+            VerticalAlignment="Center"/>
+            </StackPanel>
+
+
+            <!-- Список викладачів -->
             <ListView ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}">
                 <ListView.View>
                     <GridView>
@@ -19,6 +38,7 @@
                 </ListView.View>
             </ListView>
 
+            <!-- Кнопки -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                 <Button Content="Додати" Command="{Binding AddTeacherCommand}" Width="100" Margin="5"/>
                 <Button Content="Оновити" Command="{Binding UpdateTeacherCommand}" Width="100" Margin="5"/>
