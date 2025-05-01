@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Windows.Input;
+using ClosedXML.Excel;
+using Microsoft.Win32;
 
 public class StudentViewModel : BaseViewModel, ILoadable
 {
@@ -60,6 +62,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateStudentCommand { get; }
     public RelayCommand DeleteStudentCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
+    public RelayCommand ExportToExcelCommand { get; }
 
     public StudentViewModel(StudentService studentService, GroupService groupService)
     {
@@ -71,6 +74,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
         UpdateStudentCommand = new RelayCommand(UpdateStudent, () => SelectedStudent != null);
         DeleteStudentCommand = new RelayCommand(async () => await DeleteStudentAsync(), () => SelectedStudent != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
+        ExportToExcelCommand = new RelayCommand(ExportToExcel);
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -156,5 +160,49 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
         dialog.ShowDialog();
         return isSaved;
+    }
+
+    private void ExportToExcel()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = "Students_Report.xlsx"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Студенти");
+
+            // Заголовки
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Ім'я";
+            worksheet.Cell(1, 3).Value = "Прізвище";
+            worksheet.Cell(1, 4).Value = "Email";
+            worksheet.Cell(1, 5).Value = "Група";
+            worksheet.Cell(1, 6).Value = "Телефон";
+            worksheet.Cell(1, 7).Value = "Дата народження";
+            worksheet.Cell(1, 8).Value = "Адреса";
+
+            // Дані
+            for (int i = 0; i < Students.Count; i++)
+            {
+                var s = Students[i];
+                worksheet.Cell(i + 2, 1).Value = s.StudentID;
+                worksheet.Cell(i + 2, 2).Value = s.FirstName;
+                worksheet.Cell(i + 2, 3).Value = s.LastName;
+                worksheet.Cell(i + 2, 4).Value = s.Email;
+                worksheet.Cell(i + 2, 5).Value = s.Group?.GroupName ?? "";
+                worksheet.Cell(i + 2, 6).Value = s.Phone;
+                worksheet.Cell(i + 2, 7).Value = s.DateOfBirth.ToShortDateString();
+                worksheet.Cell(i + 2, 8).Value = s.Address;
+            }
+
+            // Автоширина колонок
+            worksheet.Columns().AdjustToContents();
+
+            workbook.SaveAs(dialog.FileName);
+        }
     }
 }

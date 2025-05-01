@@ -1,8 +1,10 @@
-﻿using CollegeInfoSystem.Models;
+﻿using ClosedXML.Excel;
+using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -57,6 +59,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateTeacherCommand { get; }
     public RelayCommand DeleteTeacherCommand { get; }
     public RelayCommand ClearFilterCommand { get; }
+    public RelayCommand ExportToExcelCommand { get; }
 
     public TeacherViewModel(TeacherService teacherService)
     {
@@ -66,6 +69,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
         UpdateTeacherCommand = new RelayCommand(UpdateTeacher, () => SelectedTeacher != null);
         DeleteTeacherCommand = new RelayCommand(async () => await DeleteTeacherAsync(), () => SelectedTeacher != null);
         ClearFilterCommand = new RelayCommand(ClearFilters);
+        ExportToExcelCommand = new RelayCommand(ExportToExcel);
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -149,5 +153,42 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
         dialog.ShowDialog();
         return isSaved;
+    }
+
+    private void ExportToExcel()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = "Teachers_Report.xlsx"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Викладачі");
+
+            // Заголовки
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Ім'я";
+            worksheet.Cell(1, 3).Value = "Прізвище";
+            worksheet.Cell(1, 4).Value = "Email";
+            worksheet.Cell(1, 5).Value = "Куратор";
+            worksheet.Cell(1, 6).Value = "Телефон";
+
+            for (int i = 0; i < Teachers.Count; i++)
+            {
+                var t = Teachers[i];
+                worksheet.Cell(i + 2, 1).Value = t.TeacherID;
+                worksheet.Cell(i + 2, 2).Value = t.FirstName;
+                worksheet.Cell(i + 2, 3).Value = t.LastName;
+                worksheet.Cell(i + 2, 4).Value = t.Email;
+                worksheet.Cell(i + 2, 5).Value = t.IsCurator ? "Так" : "Ні";
+                worksheet.Cell(i + 2, 6).Value = t.Phone;
+            }
+
+            worksheet.Columns().AdjustToContents();
+            workbook.SaveAs(dialog.FileName);
+        }
     }
 }

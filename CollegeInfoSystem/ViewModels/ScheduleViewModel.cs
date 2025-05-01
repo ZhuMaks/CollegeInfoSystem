@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Windows.Input;
+using ClosedXML.Excel;
+using Microsoft.Win32;
 
 public class ScheduleViewModel : BaseViewModel, ILoadable
 {
@@ -68,6 +70,7 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         UpdateScheduleCommand = new RelayCommand(UpdateSchedule, () => SelectedSchedule != null);
         DeleteScheduleCommand = new RelayCommand(async () => await DeleteScheduleAsync(), () => SelectedSchedule != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
+        ExportToExcelCommand = new RelayCommand(ExportToExcel);
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -77,6 +80,7 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateScheduleCommand { get; }
     public RelayCommand DeleteScheduleCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
+    public RelayCommand ExportToExcelCommand { get; }
 
     private Schedule _selectedSchedule;
     public Schedule SelectedSchedule
@@ -177,5 +181,44 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
         dialog.ShowDialog();
         return isSaved;
+    }
+    private void ExportToExcel()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = "Schedule_Report.xlsx"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Розклад");
+
+            // Заголовки
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Група";
+            worksheet.Cell(1, 3).Value = "Викладач";
+            worksheet.Cell(1, 4).Value = "Предмет";
+            worksheet.Cell(1, 5).Value = "День";
+            worksheet.Cell(1, 6).Value = "Час";
+            worksheet.Cell(1, 7).Value = "Аудиторія";
+
+            // Дані
+            for (int i = 0; i < Schedules.Count; i++)
+            {
+                var s = Schedules[i];
+                worksheet.Cell(i + 2, 1).Value = s.ScheduleID;
+                worksheet.Cell(i + 2, 2).Value = s.Group?.GroupName ?? "";
+                worksheet.Cell(i + 2, 3).Value = s.Teacher?.FullName ?? "";
+                worksheet.Cell(i + 2, 4).Value = s.Subject;
+                worksheet.Cell(i + 2, 5).Value = s.DayOfWeek;
+                worksheet.Cell(i + 2, 6).Value = $"{s.StartTime:hh\\:mm} - {s.EndTime:hh\\:mm}";
+                worksheet.Cell(i + 2, 7).Value = s.Room;
+            }
+
+            worksheet.Columns().AdjustToContents();
+            workbook.SaveAs(dialog.FileName);
+        }
     }
 }

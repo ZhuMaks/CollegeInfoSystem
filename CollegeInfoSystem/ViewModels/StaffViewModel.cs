@@ -1,8 +1,10 @@
-﻿using CollegeInfoSystem.Models;
+﻿using ClosedXML.Excel;
+using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,6 +59,7 @@ public class StaffViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateStaffCommand { get; }
     public RelayCommand DeleteStaffCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
+    public RelayCommand ExportToExcelCommand { get; }
 
     public StaffViewModel(StaffService staffService)
     {
@@ -66,6 +69,7 @@ public class StaffViewModel : BaseViewModel, ILoadable
         UpdateStaffCommand = new RelayCommand(UpdateStaff, () => SelectedStaff != null);
         DeleteStaffCommand = new RelayCommand(async () => await DeleteStaffAsync(), () => SelectedStaff != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
+        ExportToExcelCommand = new RelayCommand(ExportToExcel);
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -142,5 +146,43 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
         dialog.ShowDialog();
         return isSaved;
+    }
+
+    private void ExportToExcel()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = "Staff_Report.xlsx"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Працівники");
+
+            // Заголовки
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Ім'я";
+            worksheet.Cell(1, 3).Value = "Прізвище";
+            worksheet.Cell(1, 4).Value = "Посада";
+            worksheet.Cell(1, 5).Value = "Пошта";
+            worksheet.Cell(1, 6).Value = "Телефон";
+
+            // Дані
+            for (int i = 0; i < StaffList.Count; i++)
+            {
+                var s = StaffList[i];
+                worksheet.Cell(i + 2, 1).Value = s.StaffID;
+                worksheet.Cell(i + 2, 2).Value = s.FirstName;
+                worksheet.Cell(i + 2, 3).Value = s.LastName;
+                worksheet.Cell(i + 2, 4).Value = s.Position;
+                worksheet.Cell(i + 2, 5).Value = s.Email;
+                worksheet.Cell(i + 2, 6).Value = s.Phone;
+            }
+
+            worksheet.Columns().AdjustToContents();
+            workbook.SaveAs(dialog.FileName);
+        }
     }
 }

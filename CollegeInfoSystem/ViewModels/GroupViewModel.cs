@@ -76,6 +76,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateGroupCommand { get; }
     public RelayCommand DeleteGroupCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
+    public RelayCommand GenerateReportCommand { get; }
+
 
     public GroupViewModel(GroupService groupService, FacultyService facultyService, TeacherService teacherService, StudentService studentService)
     {
@@ -89,6 +91,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
         UpdateGroupCommand = new RelayCommand(UpdateGroup, () => SelectedGroup != null);
         DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), () => SelectedGroup != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
+        GenerateReportCommand = new RelayCommand(GenerateReport);
+
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -181,4 +185,56 @@ public class GroupViewModel : BaseViewModel, ILoadable
         dialog.ShowDialog();
         return isSaved;
     }
+    private void GenerateReport()
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Звіт");
+
+        if (SelectedGroup == null)
+        {
+            worksheet.Cell(1, 1).Value = "ID";
+            worksheet.Cell(1, 2).Value = "Назва групи";
+            worksheet.Cell(1, 3).Value = "Факультет";
+            worksheet.Cell(1, 4).Value = "Куратор";
+
+            for (int i = 0; i < Groups.Count; i++)
+            {
+                var group = Groups[i];
+                worksheet.Cell(i + 2, 1).Value = group.GroupID;
+                worksheet.Cell(i + 2, 2).Value = group.GroupName;
+                worksheet.Cell(i + 2, 3).Value = group.Faculty?.FacultyName;
+                worksheet.Cell(i + 2, 4).Value = group.Curator?.FullName;
+            }
+        }
+        else
+        {
+            worksheet.Cell(1, 1).Value = $"Група: {SelectedGroup.GroupName}";
+            worksheet.Cell(2, 1).Value = "ID";
+            worksheet.Cell(2, 2).Value = "Ім'я";
+            worksheet.Cell(2, 3).Value = "Прізвище";
+
+            for (int i = 0; i < StudentsInGroup.Count; i++)
+            {
+                var student = StudentsInGroup[i];
+                worksheet.Cell(i + 3, 1).Value = student.StudentID;
+                worksheet.Cell(i + 3, 2).Value = student.FirstName;
+                worksheet.Cell(i + 3, 3).Value = student.LastName;
+            }
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        var saveDialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = "Групи_Звіт",
+            DefaultExt = ".xlsx",
+            Filter = "Excel файли (*.xlsx)|*.xlsx"
+        };
+
+        if (saveDialog.ShowDialog() == true)
+        {
+            workbook.SaveAs(saveDialog.FileName);
+        }
+    }
+
 }

@@ -22,6 +22,8 @@
                     <TextBox Width="120" Text="{Binding CuratorFilter, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
+                <Button Content="Згенерувати звіт" Command="{Binding GenerateReportCommand}" Width="150" Margin="5"/>
+
             </StackPanel>
 
             <!-- 📋 Список груп -->

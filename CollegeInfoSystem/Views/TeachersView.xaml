@@ -21,6 +21,8 @@
             Command="{Binding ClearFilterCommand}"
             Margin="5"
             VerticalAlignment="Center"/>
+            <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
+
             </StackPanel>
 
 

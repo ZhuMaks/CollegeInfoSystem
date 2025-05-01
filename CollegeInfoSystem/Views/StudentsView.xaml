@@ -17,6 +17,7 @@
               ToolTip="Виберіть групу"/>
 
                 <Button Content="Очистити фільтр" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
+                <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
             </StackPanel>
 
 
