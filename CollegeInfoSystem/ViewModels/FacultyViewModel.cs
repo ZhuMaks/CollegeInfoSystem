@@ -1,10 +1,13 @@
-﻿using CollegeInfoSystem.Models;
+﻿using ClosedXML.Excel;
+using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows;
 
 public class FacultyViewModel : BaseViewModel, ILoadable
 {
@@ -29,6 +32,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
     public RelayCommand AddFacultyCommand { get; }
     public RelayCommand UpdateFacultyCommand { get; }
     public RelayCommand DeleteFacultyCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
 
     public FacultyViewModel(FacultyService facultyService)
     {
@@ -37,6 +41,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         AddFacultyCommand = new RelayCommand(AddFaculty);
         UpdateFacultyCommand = new RelayCommand(UpdateFaculty, () => SelectedFaculty != null);
         DeleteFacultyCommand = new RelayCommand(async () => await DeleteFacultyAsync(), () => SelectedFaculty != null);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -96,6 +101,58 @@ public class FacultyViewModel : BaseViewModel, ILoadable
 
         dialog.ShowDialog();
         return isSaved;
+    }
+    private async Task ImportFromExcel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть Excel-файл з факультетами"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook(dialog.FileName);
+            var worksheet = workbook.Worksheet(1);
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); 
+
+            var existingFaculties = await _facultyService.GetAllFacultiesAsync();
+
+            int importedCount = 0;
+            int duplicateCount = 0;
+
+            foreach (var row in rows)
+            {
+                var facultyName = row.Cell(1).GetString().Trim();
+
+                bool exists = existingFaculties.Any(f =>
+                    f.FacultyName.Equals(facultyName, System.StringComparison.OrdinalIgnoreCase));
+
+                if (!exists)
+                {
+                    var faculty = new Faculty
+                    {
+                        FacultyName = facultyName
+                    };
+
+                    await _facultyService.AddFacultyAsync(faculty);
+                    importedCount++;
+                }
+                else
+                {
+                    duplicateCount++;
+                }
+            }
+
+            await LoadDataAsync();
+
+            MessageBox.Show(
+                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                "Результат імпорту",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information
+            );
+        }
     }
 
 

@@ -60,6 +60,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteTeacherCommand { get; }
     public RelayCommand ClearFilterCommand { get; }
     public RelayCommand ExportToExcelCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
 
     public TeacherViewModel(TeacherService teacherService)
     {
@@ -70,6 +71,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
         DeleteTeacherCommand = new RelayCommand(async () => await DeleteTeacherAsync(), () => SelectedTeacher != null);
         ClearFilterCommand = new RelayCommand(ClearFilters);
         ExportToExcelCommand = new RelayCommand(ExportToExcel);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -189,6 +191,69 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
             worksheet.Columns().AdjustToContents();
             workbook.SaveAs(dialog.FileName);
+        }
+    }
+    private async Task ImportFromExcel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть Excel-файл з викладачами"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook(dialog.FileName);
+            var worksheet = workbook.Worksheet(1);
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропустити заголовки
+
+            var existingTeachers = await _teacherService.GetAllTeachersAsync();
+
+            int importedCount = 0;
+            int duplicateCount = 0;
+
+            foreach (var row in rows)
+            {
+                var firstName = row.Cell(2).GetString().Trim();
+                var lastName = row.Cell(3).GetString().Trim();
+                var email = row.Cell(4).GetString().Trim();
+                var isCurator = row.Cell(5).GetString().Trim().ToLower() == "так";
+                var phone = row.Cell(6).GetString().Trim();
+
+                bool exists = existingTeachers.Any(t =>
+                    t.FirstName.Equals(firstName, System.StringComparison.OrdinalIgnoreCase) &&
+                    t.LastName.Equals(lastName, System.StringComparison.OrdinalIgnoreCase) &&
+                    t.Email.Equals(email, System.StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (!exists)
+                {
+                    var teacher = new Teacher
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        Email = email,
+                        IsCurator = isCurator,
+                        Phone = phone
+                    };
+
+                    await _teacherService.AddTeacherAsync(teacher);
+                    importedCount++;
+                }
+                else
+                {
+                    duplicateCount++;
+                }
+            }
+
+            await LoadDataAsync();
+
+            System.Windows.MessageBox.Show(
+                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                "Результат імпорту",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information
+            );
         }
     }
 }

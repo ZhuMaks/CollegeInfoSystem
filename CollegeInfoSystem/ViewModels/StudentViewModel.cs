@@ -63,6 +63,8 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteStudentCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand ExportToExcelCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
+
 
     public StudentViewModel(StudentService studentService, GroupService groupService)
     {
@@ -75,6 +77,8 @@ public class StudentViewModel : BaseViewModel, ILoadable
         DeleteStudentCommand = new RelayCommand(async () => await DeleteStudentAsync(), () => SelectedStudent != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
         ExportToExcelCommand = new RelayCommand(ExportToExcel);
+        ImportFromExcelCommand = new RelayCommand(ImportFromExcel);
+
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -205,4 +209,83 @@ public class StudentViewModel : BaseViewModel, ILoadable
             workbook.SaveAs(dialog.FileName);
         }
     }
+    private async void ImportFromExcel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть файл Excel"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheets.First();
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропускаємо заголовок
+
+                var existingStudents = await _studentService.GetAllStudentsAsync();
+
+                int importedCount = 0;
+                int duplicateCount = 0;
+
+                foreach (var row in rows)
+                {
+                    var firstName = row.Cell(1).GetString().Trim();
+                    var lastName = row.Cell(2).GetString().Trim();
+                    var email = row.Cell(3).GetString().Trim();
+                    var phone = row.Cell(4).GetString().Trim();
+                    var dateOfBirth = row.Cell(5).GetDateTime();
+                    var address = row.Cell(6).GetString().Trim();
+                    var groupName = row.Cell(7).GetString().Trim();
+
+                    // Перевірка на дублікати
+                    bool exists = existingStudents.Any(s =>
+                        s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                        s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                        s.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (!exists)
+                    {
+                        var group = Groups.FirstOrDefault(g =>
+                            g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+
+                        var student = new Student
+                        {
+                            FirstName = firstName,
+                            LastName = lastName,
+                            Email = email,
+                            Phone = phone,
+                            DateOfBirth = dateOfBirth,
+                            Address = address,
+                            GroupID = group?.GroupID ?? 0
+                        };
+
+                        await _studentService.AddStudentAsync(student);
+                        importedCount++;
+                    }
+                    else
+                    {
+                        duplicateCount++;
+                    }
+                }
+
+                await LoadDataAsync();
+
+                System.Windows.MessageBox.Show(
+                    $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                    "Результат імпорту",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+            }
+        }
+    }
+
 }

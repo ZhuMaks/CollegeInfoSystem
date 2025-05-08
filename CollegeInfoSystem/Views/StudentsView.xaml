@@ -18,6 +18,7 @@
 
                 <Button Content="Очистити фільтр" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
                 <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
+                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5"/>
             </StackPanel>
 
 

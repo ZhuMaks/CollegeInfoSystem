@@ -77,6 +77,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteGroupCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand GenerateReportCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
+
 
 
     public GroupViewModel(GroupService groupService, FacultyService facultyService, TeacherService teacherService, StudentService studentService)
@@ -92,6 +94,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
         DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), () => SelectedGroup != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
         GenerateReportCommand = new RelayCommand(GenerateReport);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
+
 
 
         Task.Run(async () => await LoadDataAsync());
@@ -234,6 +238,70 @@ public class GroupViewModel : BaseViewModel, ILoadable
         if (saveDialog.ShowDialog() == true)
         {
             workbook.SaveAs(saveDialog.FileName);
+        }
+    }
+    private async Task ImportFromExcel()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Excel файли (*.xlsx)|*.xlsx",
+            Title = "Виберіть Excel-файл з групами"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new ClosedXML.Excel.XLWorkbook(dialog.FileName);
+            var worksheet = workbook.Worksheet(1);
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропустити заголовки
+
+            var existingGroups = await _groupService.GetAllGroupsAsync();
+            var faculties = await _facultyService.GetAllFacultiesAsync();
+            var teachers = await _teacherService.GetAllTeachersAsync();
+
+            int importedCount = 0;
+            int duplicateCount = 0;
+
+            foreach (var row in rows)
+            {
+                var groupName = row.Cell(2).GetString().Trim();
+                var facultyName = row.Cell(3).GetString().Trim();
+                var curatorFullName = row.Cell(4).GetString().Trim();
+
+                bool exists = existingGroups.Any(g =>
+                    g.GroupName.Equals(groupName, System.StringComparison.OrdinalIgnoreCase));
+
+                if (!exists)
+                {
+                    var faculty = faculties.FirstOrDefault(f =>
+                        f.FacultyName.Equals(facultyName, System.StringComparison.OrdinalIgnoreCase));
+
+                    var curator = teachers.FirstOrDefault(t =>
+                        t.FullName.Equals(curatorFullName, System.StringComparison.OrdinalIgnoreCase));
+
+                    var newGroup = new Group
+                    {
+                        GroupName = groupName,
+                        FacultyID = faculty?.FacultyID ?? 0,
+                        CuratorID = curator?.TeacherID
+                    };
+
+                    await _groupService.AddGroupAsync(newGroup);
+                    importedCount++;
+                }
+                else
+                {
+                    duplicateCount++;
+                }
+            }
+
+            await LoadDataAsync();
+
+            System.Windows.MessageBox.Show(
+                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                "Результат імпорту",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information
+            );
         }
     }
 

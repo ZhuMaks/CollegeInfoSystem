@@ -23,6 +23,7 @@
                 </StackPanel>
                 <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
                 <Button Content="Згенерувати звіт" Command="{Binding GenerateReportCommand}" Width="150" Margin="5"/>
+                <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5" />
 
             </StackPanel>
 

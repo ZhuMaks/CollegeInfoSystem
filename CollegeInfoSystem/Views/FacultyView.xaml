@@ -11,6 +11,7 @@
                     <GridView>
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding FacultyID}" Width="50"/>
                         <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding FacultyName}" Width="200"/>
+                        
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -19,6 +20,8 @@
                 <Button Content="Додати" Command="{Binding AddFacultyCommand}" Width="100" Margin="5"/>
                 <Button Content="Оновити" Command="{Binding UpdateFacultyCommand}" Width="100" Margin="5"/>
                 <Button Content="Видалити" Command="{Binding DeleteFacultyCommand}" Width="100" Margin="5"/>
+                <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5"/>
+
             </StackPanel>
         </StackPanel>
     </Grid>

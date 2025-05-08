@@ -19,6 +19,8 @@
                 </StackPanel>
                 <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
                 <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="120" Margin="5"/>
+                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="120" Margin="5"/>
+
             </StackPanel>
 
             <!-- 📋 Таблиця працівників -->

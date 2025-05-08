@@ -22,6 +22,7 @@
             Margin="5"
             VerticalAlignment="Center"/>
             <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
+            <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5" />
 
             </StackPanel>
 

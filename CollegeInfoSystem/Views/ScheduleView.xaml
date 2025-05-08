@@ -26,6 +26,8 @@
             Width="130"
             Margin="5"/>
                 <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="120" Margin="5"/>
+                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5"/>
+
 
             </StackPanel>
 

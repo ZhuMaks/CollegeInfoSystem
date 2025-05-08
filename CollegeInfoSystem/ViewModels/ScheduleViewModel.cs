@@ -71,6 +71,8 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         DeleteScheduleCommand = new RelayCommand(async () => await DeleteScheduleAsync(), () => SelectedSchedule != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
         ExportToExcelCommand = new RelayCommand(ExportToExcel);
+        ImportFromExcelCommand = new RelayCommand(ImportFromExcel);
+
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -81,6 +83,8 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteScheduleCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand ExportToExcelCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
+
 
     private Schedule _selectedSchedule;
     public Schedule SelectedSchedule
@@ -219,6 +223,90 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
             worksheet.Columns().AdjustToContents();
             workbook.SaveAs(dialog.FileName);
+        }
+    }
+    private async void ImportFromExcel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть Excel-файл з розкладом"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheets.First();
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропускаємо заголовок
+
+                int importedCount = 0;
+                int duplicateCount = 0;
+
+                foreach (var row in rows)
+                {
+                    var groupName = row.Cell(1).GetString();
+                    var teacherFullName = row.Cell(2).GetString();
+                    var subject = row.Cell(3).GetString();
+                    var dayOfWeek = row.Cell(4).GetString();
+                    var startTimeStr = row.Cell(5).GetString().Split('-')[0].Trim();
+                    var endTimeStr = row.Cell(5).GetString().Split('-')[1].Trim();
+                    var room = row.Cell(6).GetString();
+
+                    var group = Groups.FirstOrDefault(g => g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+                    var teacher = Teachers.FirstOrDefault(t => t.FullName.Equals(teacherFullName, StringComparison.OrdinalIgnoreCase));
+
+                    if (group == null || teacher == null)
+                        continue;
+
+                    // Перевірка на дублікати
+                    var existingSchedule = _allSchedules.FirstOrDefault(s =>
+                        s.GroupID == group.GroupID &&
+                        s.TeacherID == teacher.TeacherID &&
+                        s.Subject.Equals(subject, StringComparison.OrdinalIgnoreCase) &&
+                        s.DayOfWeek.Equals(dayOfWeek, StringComparison.OrdinalIgnoreCase) &&
+                        s.StartTime == TimeSpan.Parse(startTimeStr) &&
+                        s.EndTime == TimeSpan.Parse(endTimeStr) &&
+                        s.Room.Equals(room, StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (existingSchedule == null)
+                    {
+                        var schedule = new Schedule
+                        {
+                            GroupID = group.GroupID,
+                            TeacherID = teacher.TeacherID,
+                            Subject = subject,
+                            DayOfWeek = dayOfWeek,
+                            StartTime = TimeSpan.Parse(startTimeStr),
+                            EndTime = TimeSpan.Parse(endTimeStr),
+                            Room = room
+                        };
+
+                        await _scheduleService.AddScheduleAsync(schedule);
+                        importedCount++;
+                    }
+                    else
+                    {
+                        duplicateCount++;
+                    }
+                }
+
+                await LoadDataAsync();
+
+                // Показати результат в MessageBox
+                System.Windows.MessageBox.Show(
+                    $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                    "Результат імпорту",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Помилка імпорту: " + ex.Message);
+            }
         }
     }
 }

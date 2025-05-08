@@ -60,6 +60,7 @@ public class StaffViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteStaffCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand ExportToExcelCommand { get; }
+    public RelayCommand ImportFromExcelCommand { get; }
 
     public StaffViewModel(StaffService staffService)
     {
@@ -70,6 +71,7 @@ public class StaffViewModel : BaseViewModel, ILoadable
         DeleteStaffCommand = new RelayCommand(async () => await DeleteStaffAsync(), () => SelectedStaff != null);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
         ExportToExcelCommand = new RelayCommand(ExportToExcel);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
 
         Task.Run(async () => await LoadDataAsync());
     }
@@ -183,6 +185,69 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
             worksheet.Columns().AdjustToContents();
             workbook.SaveAs(dialog.FileName);
+        }
+    }
+    private async Task ImportFromExcel()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть Excel-файл з працівниками"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook(dialog.FileName);
+            var worksheet = workbook.Worksheet(1);
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропускаємо заголовки
+
+            var existingStaff = await _staffService.GetAllStaffAsync();
+
+            int importedCount = 0;
+            int duplicateCount = 0;
+
+            foreach (var row in rows)
+            {
+                var firstName = row.Cell(2).GetString().Trim();
+                var lastName = row.Cell(3).GetString().Trim();
+                var position = row.Cell(4).GetString().Trim();
+                var email = row.Cell(5).GetString().Trim();
+                var phone = row.Cell(6).GetString().Trim();
+
+                bool exists = existingStaff.Any(s =>
+                    s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                    s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                    s.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (!exists)
+                {
+                    var staff = new Staff
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        Position = position,
+                        Email = email,
+                        Phone = phone
+                    };
+
+                    await _staffService.AddStaffAsync(staff);
+                    importedCount++;
+                }
+                else
+                {
+                    duplicateCount++;
+                }
+            }
+
+            await LoadDataAsync();
+
+            System.Windows.MessageBox.Show(
+                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                "Результат імпорту",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information
+            );
         }
     }
 }
