@@ -10,6 +10,7 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 
+namespace CollegeInfoSystem.ViewModels;
 public class StudentViewModel : BaseViewModel, ILoadable
 {
     private readonly StudentService _studentService;
@@ -270,6 +271,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
                     {
                         duplicateCount++;
                     }
+
                 }
 
                 await LoadDataAsync();
@@ -287,5 +289,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
             }
         }
     }
+
 
 }

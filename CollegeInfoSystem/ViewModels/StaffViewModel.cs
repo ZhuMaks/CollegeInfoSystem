@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+namespace CollegeInfoSystem.ViewModels;
 public class StaffViewModel : BaseViewModel, ILoadable
 {
     private readonly StaffService _staffService;

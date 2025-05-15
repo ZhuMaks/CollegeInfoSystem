@@ -10,6 +10,8 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 
+namespace CollegeInfoSystem.ViewModels;
+
 public class ScheduleViewModel : BaseViewModel, ILoadable
 {
     private readonly ScheduleService _scheduleService;

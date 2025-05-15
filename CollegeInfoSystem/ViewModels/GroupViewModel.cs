@@ -9,6 +9,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+namespace CollegeInfoSystem.ViewModels;
+
 public class GroupViewModel : BaseViewModel, ILoadable
 {
     private readonly GroupService _groupService;

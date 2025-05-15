@@ -9,6 +9,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 
+namespace CollegeInfoSystem.ViewModels;
+
 public class FacultyViewModel : BaseViewModel, ILoadable
 {
     private readonly FacultyService _facultyService;

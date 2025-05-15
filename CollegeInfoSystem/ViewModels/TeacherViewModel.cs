@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+namespace CollegeInfoSystem.ViewModels;
 public class TeacherViewModel : BaseViewModel, ILoadable
 {
     private readonly TeacherService _teacherService;

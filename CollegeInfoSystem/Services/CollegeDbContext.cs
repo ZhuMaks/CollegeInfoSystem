@@ -1,43 +1,45 @@
 ﻿using CollegeInfoSystem.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CollegeInfoSystem.Services;
-
-public class CollegeDbContext : DbContext
+namespace CollegeInfoSystem.Services
 {
-    public DbSet<Student> Students { get; set; }
-    public DbSet<Teacher> Teachers { get; set; }
-    public DbSet<Staff> Staff { get; set; }
-    public DbSet<Faculty> Faculties { get; set; }
-    public DbSet<Group> Groups { get; set; }
-    public DbSet<Schedule> Schedules { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public class CollegeDbContext : DbContext
     {
-        optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=CollegeDB;Trusted_Connection=True;");
-    }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Teacher> Teachers { get; set; }
+        public DbSet<Staff> Staff { get; set; }
+        public DbSet<Faculty> Faculties { get; set; }
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<Schedule> Schedules { get; set; }
+        public DbSet<User> Users { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Group>()
-            .HasOne(g => g.Curator)
-            .WithMany()
-            .HasForeignKey(g => g.CuratorID)
-            .OnDelete(DeleteBehavior.SetNull);
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=CollegeDB;Trusted_Connection=True;");
+        }
 
-        modelBuilder.Entity<Student>()
-            .HasOne(s => s.Group)
-            .WithMany(g => g.Students)
-            .HasForeignKey(s => s.GroupID);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Group>()
+                .HasOne(g => g.Curator)
+                .WithMany()
+                .HasForeignKey(g => g.CuratorID)
+                .OnDelete(DeleteBehavior.SetNull);
 
-        modelBuilder.Entity<Schedule>()
-            .HasOne(s => s.Group)
-            .WithMany()
-            .HasForeignKey(s => s.GroupID);
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Group)
+                .WithMany(g => g.Students)
+                .HasForeignKey(s => s.GroupID);
 
-        modelBuilder.Entity<Schedule>()
-            .HasOne(s => s.Teacher)
-            .WithMany()
-            .HasForeignKey(s => s.TeacherID);
+            modelBuilder.Entity<Schedule>()
+                .HasOne(s => s.Group)
+                .WithMany()
+                .HasForeignKey(s => s.GroupID);
+
+            modelBuilder.Entity<Schedule>()
+                .HasOne(s => s.Teacher)
+                .WithMany()
+                .HasForeignKey(s => s.TeacherID);
+        }
     }
 }
