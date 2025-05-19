@@ -12,9 +12,7 @@
             <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Width="100" Height="30" Margin="10"/>
             <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Width="100" Height="30" Margin="10"/>
             <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Width="100" Height="30" Margin="10" />
-
-
-
+            <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Width="100" Height="30" Margin="10" Visibility="Collapsed"/>
 
 
 

@@ -7,7 +7,10 @@ namespace CollegeInfoSystem.Views
         public MainWindow(string userRole)
         {
             InitializeComponent();
-            // DataContext is already set in App.xaml.cs
+
+            if (userRole == "admin")
+                UsersButton.Visibility = Visibility.Visible;
         }
+
     }
 }

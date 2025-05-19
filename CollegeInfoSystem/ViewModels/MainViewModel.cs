@@ -1,4 +1,5 @@
 ﻿using System.Windows.Input;
+using CollegeInfoSystem.Services;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -26,6 +27,7 @@ namespace CollegeInfoSystem.ViewModels
         private readonly ScheduleView _scheduleView;
         private readonly FacultyView _facultyView;
         private readonly StaffView _staffView;
+        private readonly UsersView _usersView;
 
         private readonly StudentViewModel _studentViewModel;
         private readonly TeacherViewModel _teacherViewModel;
@@ -33,6 +35,7 @@ namespace CollegeInfoSystem.ViewModels
         private readonly ScheduleViewModel _scheduleViewModel;
         private readonly FacultyViewModel _facultyViewModel;
         private readonly StaffViewModel _staffViewModel;
+        private readonly UsersViewModel _usersViewModel;
 
         public ICommand OpenStudentsViewCommand { get; }
         public ICommand OpenTeachersViewCommand { get; }
@@ -40,6 +43,7 @@ namespace CollegeInfoSystem.ViewModels
         public ICommand OpenScheduleViewCommand { get; }
         public ICommand OpenFacultyViewCommand { get; }
         public ICommand OpenStaffViewCommand { get; }
+        public ICommand? OpenUsersViewCommand { get; }
 
         public string UserRole => _userRole;
 
@@ -69,6 +73,15 @@ namespace CollegeInfoSystem.ViewModels
             OpenScheduleViewCommand = new RelayCommand(() => SetCurrentView(_scheduleView, _scheduleViewModel));
             OpenFacultyViewCommand = new RelayCommand(() => SetCurrentView(_facultyView, _facultyViewModel), () => _userRole != "guest");
             OpenStaffViewCommand = new RelayCommand(() => SetCurrentView(_staffView, _staffViewModel), () => _userRole != "guest");
+
+            if (_userRole == "admin")
+            {
+                var dbContext = new CollegeDbContext();
+                var userService = new UserService(dbContext);
+                _usersViewModel = new UsersViewModel(userService, dbContext);
+                _usersView = new UsersView { DataContext = _usersViewModel };
+                OpenUsersViewCommand = new RelayCommand(() => SetCurrentView(_usersView, _usersViewModel));
+            }
 
             CurrentView = _studentsView;
         }

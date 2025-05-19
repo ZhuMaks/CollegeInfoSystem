@@ -7,7 +7,7 @@ public interface ILoadable
 {
     Task LoadDataAsync();
 }
-public class BaseViewModel : INotifyPropertyChanged
+public class BaseViewModel : ObservableObject, INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged = delegate { };
 

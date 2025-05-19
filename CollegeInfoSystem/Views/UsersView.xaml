@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="CollegeInfoSystem.Views.UsersView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Ім'я користувача:"/>
+            <TextBox x:Name="usernameTextBox" Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
+
+            <PasswordBox x:Name="passwordBox" PasswordChanged="PasswordBox_PasswordChanged" Margin="5"/>
+
+            <ComboBox x:Name="roleComboBox"
+          SelectedValue="{Binding NewRole, UpdateSourceTrigger=PropertyChanged}" 
+          SelectedValuePath="Content" Margin="5">
+                <ComboBoxItem Content="admin"/>
+                <ComboBoxItem Content="teacher"/>
+                <ComboBoxItem Content="guest"/>
+            </ComboBox>
+
+
+            <Button Content="Додати користувача" Command="{Binding AddUserCommand}" Margin="5"/>
+            <ListBox ItemsSource="{Binding Users}" DisplayMemberPath="Username" SelectedItem="{Binding SelectedUser}" Margin="5"/>
+            <Button Content="Видалити користувача" Command="{Binding DeleteUserCommand}" Margin="5"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -25,13 +25,11 @@ namespace CollegeInfoSystem.ViewModels
         public event Action<string>? LoginSucceeded;
 
         public ICommand LoginCommand { get; }
-        public ICommand RegisterCommand { get; }
 
         public LoginViewModel()
         {
             _userService = new UserService(new CollegeDbContext());
             LoginCommand = new RelayCommand(async () => await LoginAsync());
-            RegisterCommand = new RelayCommand(async () => await RegisterAsync());
         }
 
         private async Task LoginAsync()
@@ -53,28 +51,6 @@ namespace CollegeInfoSystem.ViewModels
             else
             {
                 ErrorMessage = "Invalid username or password.";
-            }
-        }
-
-        private async Task RegisterAsync()
-        {
-            ErrorMessage = string.Empty;
-
-            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
-            {
-                ErrorMessage = "Please enter username and password.";
-                return;
-            }
-
-            var success = await _userService.RegisterAsync(Username, Password, "guest");
-
-            if (success)
-            {
-                LoginSucceeded?.Invoke("guest");
-            }
-            else
-            {
-                ErrorMessage = "User already exists.";
             }
         }
     }
