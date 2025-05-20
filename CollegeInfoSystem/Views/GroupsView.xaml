@@ -7,7 +7,6 @@
     <Grid>
         <StackPanel>
 
-            <!-- Пошук і фільтри -->
             <StackPanel Orientation="Horizontal" Margin="10">
                 <TextBox Width="200" Margin="5"
                          Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"
@@ -28,7 +27,6 @@
                 <Button Content="Очистити фільтр" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
                 <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
 
-                <!-- Імпорт з Excel (тільки для admin) -->
                 <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5">
                     <Button.Style>
                         <Style TargetType="Button">
@@ -43,7 +41,6 @@
                 </Button>
             </StackPanel>
 
-            <!-- Список груп -->
             <ListView ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" Margin="10">
                 <ListView.View>
                     <GridView>
@@ -55,10 +52,8 @@
                 </ListView.View>
             </ListView>
 
-            <!-- Кнопки CRUD -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
 
-                <!-- Додати (admin, teacher) -->
                 <Button Content="Додати" Command="{Binding AddGroupCommand}" Width="100" Margin="5">
                     <Button.Style>
                         <Style TargetType="Button">
@@ -75,7 +70,6 @@
                     </Button.Style>
                 </Button>
 
-                <!-- Оновити (admin, teacher) -->
                 <Button Content="Оновити" Command="{Binding UpdateGroupCommand}" Width="100" Margin="5">
                     <Button.Style>
                         <Style TargetType="Button">
@@ -92,7 +86,6 @@
                     </Button.Style>
                 </Button>
 
-                <!-- Видалити (admin, teacher) -->
                 <Button Content="Видалити" Command="{Binding DeleteGroupCommand}" Width="100" Margin="5">
                     <Button.Style>
                         <Style TargetType="Button">
@@ -111,7 +104,6 @@
 
             </StackPanel>
 
-            <!-- Студенти в групі -->
             <TextBlock Text="Студенти в групі" FontWeight="Bold" Margin="10"/>
             <ListView ItemsSource="{Binding StudentsInGroup}" Margin="10">
                 <ListView.View>
