@@ -85,13 +85,16 @@
                     </Button.Style>
                 </Button>
 
-                <!-- Видалити (тільки admin) -->
+                <!-- Видалити (admin, teacher) -->
                 <Button Content="Видалити" Command="{Binding DeleteStudentCommand}" Width="100" Margin="5">
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
                                     <Setter Property="Visibility" Value="Visible"/>
                                 </DataTrigger>
                             </Style.Triggers>

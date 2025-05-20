@@ -1,16 +1,16 @@
 ﻿using ClosedXML.Excel;
 using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
-using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 
 namespace CollegeInfoSystem.ViewModels;
+
 public class TeacherViewModel : BaseViewModel, ILoadable
 {
     private readonly TeacherService _teacherService;
@@ -26,8 +26,8 @@ public class TeacherViewModel : BaseViewModel, ILoadable
         {
             _selectedTeacher = value;
             OnPropertyChanged();
-            ((RelayCommand)UpdateTeacherCommand).NotifyCanExecuteChanged();
-            ((RelayCommand)DeleteTeacherCommand).NotifyCanExecuteChanged();
+            UpdateTeacherCommand.NotifyCanExecuteChanged();
+            DeleteTeacherCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -55,6 +55,18 @@ public class TeacherViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private string _currentUserRole;
+    public string CurrentUserRole
+    {
+        get => _currentUserRole;
+        set
+        {
+            _currentUserRole = value;
+            OnPropertyChanged();
+            UpdateCommandsCanExecute();
+        }
+    }
+
     public RelayCommand LoadTeachersCommand { get; }
     public RelayCommand AddTeacherCommand { get; }
     public RelayCommand UpdateTeacherCommand { get; }
@@ -63,18 +75,29 @@ public class TeacherViewModel : BaseViewModel, ILoadable
     public RelayCommand ExportToExcelCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
 
-    public TeacherViewModel(TeacherService teacherService)
+    public TeacherViewModel(TeacherService teacherService, string currentUserRole)
     {
         _teacherService = teacherService;
+        _currentUserRole = currentUserRole;
+
         LoadTeachersCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddTeacherCommand = new RelayCommand(AddTeacher);
-        UpdateTeacherCommand = new RelayCommand(UpdateTeacher, () => SelectedTeacher != null);
-        DeleteTeacherCommand = new RelayCommand(async () => await DeleteTeacherAsync(), () => SelectedTeacher != null);
+        AddTeacherCommand = new RelayCommand(AddTeacher, CanExecuteAddTeacher);
+        UpdateTeacherCommand = new RelayCommand(UpdateTeacher, CanExecuteUpdateTeacher);
+        DeleteTeacherCommand = new RelayCommand(async () => await DeleteTeacherAsync(), CanExecuteDeleteTeacher);
         ClearFilterCommand = new RelayCommand(ClearFilters);
-        ExportToExcelCommand = new RelayCommand(ExportToExcel);
-        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
+        ExportToExcelCommand = new RelayCommand(ExportToExcel, CanExecuteExport);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel(), CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+    }
+
+    private void UpdateCommandsCanExecute()
+    {
+        AddTeacherCommand.NotifyCanExecuteChanged();
+        UpdateTeacherCommand.NotifyCanExecuteChanged();
+        DeleteTeacherCommand.NotifyCanExecuteChanged();
+        ExportToExcelCommand.NotifyCanExecuteChanged();
+        ImportFromExcelCommand.NotifyCanExecuteChanged();
     }
 
     public async Task LoadDataAsync()
@@ -84,11 +107,24 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
         var teachers = await _teacherService.GetAllTeachersAsync();
         foreach (var teacher in teachers)
-        {
             _allTeachers.Add(teacher);
-        }
 
         ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        var filtered = _allTeachers.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(LastNameFilter))
+            filtered = filtered.Where(t => t.LastName.Contains(LastNameFilter, StringComparison.OrdinalIgnoreCase));
+
+        if (IsCuratorOnly)
+            filtered = filtered.Where(t => t.IsCurator);
+
+        Teachers.Clear();
+        foreach (var teacher in filtered)
+            Teachers.Add(teacher);
     }
 
     private void ClearFilters()
@@ -97,22 +133,11 @@ public class TeacherViewModel : BaseViewModel, ILoadable
         IsCuratorOnly = false;
     }
 
-    private void ApplyFilters()
-    {
-        var filtered = _allTeachers.AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(LastNameFilter))
-            filtered = filtered.Where(t => t.LastName.Contains(LastNameFilter, System.StringComparison.OrdinalIgnoreCase));
-
-        if (IsCuratorOnly)
-            filtered = filtered.Where(t => t.IsCurator);
-
-        Teachers.Clear();
-        foreach (var teacher in filtered)
-        {
-            Teachers.Add(teacher);
-        }
-    }
+    private bool CanExecuteAddTeacher() => CurrentUserRole == "admin";
+    private bool CanExecuteUpdateTeacher() => SelectedTeacher != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteTeacher() => SelectedTeacher != null && CurrentUserRole == "admin";
+    private bool CanExecuteExport() => CurrentUserRole is "admin" or "teacher" or "guest";
+    private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddTeacher()
     {
@@ -171,7 +196,6 @@ public class TeacherViewModel : BaseViewModel, ILoadable
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Викладачі");
 
-            // Заголовки
             worksheet.Cell(1, 1).Value = "ID";
             worksheet.Cell(1, 2).Value = "Ім'я";
             worksheet.Cell(1, 3).Value = "Прізвище";
@@ -194,67 +218,75 @@ public class TeacherViewModel : BaseViewModel, ILoadable
             workbook.SaveAs(dialog.FileName);
         }
     }
+
     private async Task ImportFromExcel()
     {
         var dialog = new OpenFileDialog
         {
             Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть Excel-файл з викладачами"
+            Title = "Виберіть файл Excel"
         };
 
         if (dialog.ShowDialog() == true)
         {
-            using var workbook = new XLWorkbook(dialog.FileName);
-            var worksheet = workbook.Worksheet(1);
-            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропустити заголовки
-
-            var existingTeachers = await _teacherService.GetAllTeachersAsync();
-
-            int importedCount = 0;
-            int duplicateCount = 0;
-
-            foreach (var row in rows)
+            try
             {
-                var firstName = row.Cell(2).GetString().Trim();
-                var lastName = row.Cell(3).GetString().Trim();
-                var email = row.Cell(4).GetString().Trim();
-                var isCurator = row.Cell(5).GetString().Trim().ToLower() == "так";
-                var phone = row.Cell(6).GetString().Trim();
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheets.First();
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                bool exists = existingTeachers.Any(t =>
-                    t.FirstName.Equals(firstName, System.StringComparison.OrdinalIgnoreCase) &&
-                    t.LastName.Equals(lastName, System.StringComparison.OrdinalIgnoreCase) &&
-                    t.Email.Equals(email, System.StringComparison.OrdinalIgnoreCase)
-                );
+                var existingTeachers = await _teacherService.GetAllTeachersAsync();
 
-                if (!exists)
+                int imported = 0;
+                int duplicates = 0;
+
+                foreach (var row in rows)
                 {
-                    var teacher = new Teacher
+                    var firstName = row.Cell(1).GetString().Trim();
+                    var lastName = row.Cell(2).GetString().Trim();
+                    var email = row.Cell(3).GetString().Trim();
+                    var isCurator = row.Cell(4).GetString().Trim().Equals("Так", StringComparison.OrdinalIgnoreCase);
+                    var phone = row.Cell(5).GetString().Trim();
+
+                    bool exists = existingTeachers.Any(t =>
+                        t.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                        t.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                        t.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                    );
+
+                    if (!exists)
                     {
-                        FirstName = firstName,
-                        LastName = lastName,
-                        Email = email,
-                        IsCurator = isCurator,
-                        Phone = phone
-                    };
+                        var teacher = new Teacher
+                        {
+                            FirstName = firstName,
+                            LastName = lastName,
+                            Email = email,
+                            IsCurator = isCurator,
+                            Phone = phone
+                        };
 
-                    await _teacherService.AddTeacherAsync(teacher);
-                    importedCount++;
+                        await _teacherService.AddTeacherAsync(teacher);
+                        imported++;
+                    }
+                    else
+                    {
+                        duplicates++;
+                    }
                 }
-                else
-                {
-                    duplicateCount++;
-                }
+
+                await LoadDataAsync();
+
+                System.Windows.MessageBox.Show(
+                    $"Імпорт завершено:\nДодано: {imported}\nПропущено (дублікати): {duplicates}",
+                    "Результат імпорту",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information
+                );
             }
-
-            await LoadDataAsync();
-
-            System.Windows.MessageBox.Show(
-                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
-                "Результат імпорту",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Information
-            );
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+            }
         }
     }
 }

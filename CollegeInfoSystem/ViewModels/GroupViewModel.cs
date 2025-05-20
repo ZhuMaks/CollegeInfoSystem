@@ -1,12 +1,12 @@
 ﻿using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
-using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
+using ClosedXML.Excel;
+using Microsoft.Win32;
+using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace CollegeInfoSystem.ViewModels;
@@ -18,10 +18,36 @@ public class GroupViewModel : BaseViewModel, ILoadable
     private readonly TeacherService _teacherService;
     private readonly StudentService _studentService;
 
-    private List<Group> _allGroups;
+    private List<Group> _allGroups = new();
 
     public ObservableCollection<Group> Groups { get; set; } = new();
     public ObservableCollection<Student> StudentsInGroup { get; set; } = new();
+
+    public ObservableCollection<Faculty> Faculties { get; set; } = new();
+    private Faculty _selectedFaculty;
+    public Faculty SelectedFaculty
+    {
+        get => _selectedFaculty;
+        set
+        {
+            _selectedFaculty = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
+
+    public ObservableCollection<Teacher> Curators { get; set; } = new();
+    private Teacher _selectedCurator;
+    public Teacher SelectedCurator
+    {
+        get => _selectedCurator;
+        set
+        {
+            _selectedCurator = value;
+            OnPropertyChanged();
+            ApplyFilters();
+        }
+    }
 
     private Group _selectedGroup;
     public Group SelectedGroup
@@ -31,9 +57,9 @@ public class GroupViewModel : BaseViewModel, ILoadable
         {
             _selectedGroup = value;
             OnPropertyChanged();
-            ((RelayCommand)UpdateGroupCommand).NotifyCanExecuteChanged();
-            ((RelayCommand)DeleteGroupCommand).NotifyCanExecuteChanged();
-            LoadStudentsInGroup();
+            UpdateGroupCommand.NotifyCanExecuteChanged();
+            DeleteGroupCommand.NotifyCanExecuteChanged();
+            LoadStudentsInGroupAsync();
         }
     }
 
@@ -49,27 +75,15 @@ public class GroupViewModel : BaseViewModel, ILoadable
         }
     }
 
-    private string _facultyFilter;
-    public string FacultyFilter
+    private string _currentUserRole;
+    public string CurrentUserRole
     {
-        get => _facultyFilter;
+        get => _currentUserRole;
         set
         {
-            _facultyFilter = value;
+            _currentUserRole = value;
             OnPropertyChanged();
-            ApplyFilters();
-        }
-    }
-
-    private string _curatorFilter;
-    public string CuratorFilter
-    {
-        get => _curatorFilter;
-        set
-        {
-            _curatorFilter = value;
-            OnPropertyChanged();
-            ApplyFilters();
+            UpdateCommandsCanExecute();
         }
     }
 
@@ -78,35 +92,57 @@ public class GroupViewModel : BaseViewModel, ILoadable
     public RelayCommand UpdateGroupCommand { get; }
     public RelayCommand DeleteGroupCommand { get; }
     public RelayCommand ClearFiltersCommand { get; }
-    public RelayCommand GenerateReportCommand { get; }
+    public RelayCommand ExportToExcelCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
 
-
-
-    public GroupViewModel(GroupService groupService, FacultyService facultyService, TeacherService teacherService, StudentService studentService)
+    public GroupViewModel(
+        GroupService groupService,
+        FacultyService facultyService,
+        TeacherService teacherService,
+        StudentService studentService,
+        string currentUserRole)
     {
         _groupService = groupService;
         _facultyService = facultyService;
         _teacherService = teacherService;
         _studentService = studentService;
+        _currentUserRole = currentUserRole;
 
         LoadGroupsCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddGroupCommand = new RelayCommand(AddGroup);
-        UpdateGroupCommand = new RelayCommand(UpdateGroup, () => SelectedGroup != null);
-        DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), () => SelectedGroup != null);
+        AddGroupCommand = new RelayCommand(AddGroup, CanExecuteAddGroup);
+        UpdateGroupCommand = new RelayCommand(UpdateGroup, CanExecuteUpdateGroup);
+        DeleteGroupCommand = new RelayCommand(async () => await DeleteGroupAsync(), CanExecuteDeleteGroup);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
-        GenerateReportCommand = new RelayCommand(GenerateReport);
-        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
-
-
+        ExportToExcelCommand = new RelayCommand(ExportToExcel, CanExecuteExport);
+        ImportFromExcelCommand = new RelayCommand(ImportFromExcel, CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+    }
+
+    private void UpdateCommandsCanExecute()
+    {
+        AddGroupCommand.NotifyCanExecuteChanged();
+        UpdateGroupCommand.NotifyCanExecuteChanged();
+        DeleteGroupCommand.NotifyCanExecuteChanged();
+        ExportToExcelCommand.NotifyCanExecuteChanged();
+        ImportFromExcelCommand.NotifyCanExecuteChanged();
     }
 
     public async Task LoadDataAsync()
     {
         Groups.Clear();
         _allGroups = (await _groupService.GetAllGroupsAsync()).ToList();
+
+        Faculties.Clear();
+        var faculties = await _facultyService.GetAllFacultiesAsync();
+        foreach (var f in faculties)
+            Faculties.Add(f);
+
+        Curators.Clear();
+        var curators = await _teacherService.GetAllTeachersAsync();
+        foreach (var c in curators)
+            Curators.Add(c);
+
         ApplyFilters();
     }
 
@@ -115,13 +151,13 @@ public class GroupViewModel : BaseViewModel, ILoadable
         var filtered = _allGroups.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(GroupNameFilter))
-            filtered = filtered.Where(g => g.GroupName.Contains(GroupNameFilter, System.StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(g => g.GroupName.Contains(GroupNameFilter, StringComparison.OrdinalIgnoreCase));
 
-        if (!string.IsNullOrWhiteSpace(FacultyFilter))
-            filtered = filtered.Where(g => g.Faculty?.FacultyName?.Contains(FacultyFilter, System.StringComparison.OrdinalIgnoreCase) == true);
+        if (SelectedFaculty != null)
+            filtered = filtered.Where(g => g.FacultyID == SelectedFaculty.FacultyID);
 
-        if (!string.IsNullOrWhiteSpace(CuratorFilter))
-            filtered = filtered.Where(g => g.Curator?.FullName?.Contains(CuratorFilter, System.StringComparison.OrdinalIgnoreCase) == true);
+        if (SelectedCurator != null)
+            filtered = filtered.Where(g => g.CuratorID == SelectedCurator.TeacherID);
 
         Groups.Clear();
         foreach (var group in filtered)
@@ -131,11 +167,11 @@ public class GroupViewModel : BaseViewModel, ILoadable
     private void ClearFilters()
     {
         GroupNameFilter = string.Empty;
-        FacultyFilter = string.Empty;
-        CuratorFilter = string.Empty;
+        SelectedFaculty = null;
+        SelectedCurator = null;
     }
 
-    private async void LoadStudentsInGroup()
+    private async void LoadStudentsInGroupAsync()
     {
         StudentsInGroup.Clear();
         if (SelectedGroup != null)
@@ -147,6 +183,12 @@ public class GroupViewModel : BaseViewModel, ILoadable
             }
         }
     }
+
+    private bool CanExecuteAddGroup() => CurrentUserRole == "admin";
+    private bool CanExecuteUpdateGroup() => SelectedGroup != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteGroup() => SelectedGroup != null && CurrentUserRole == "admin";
+    private bool CanExecuteExport() => true;
+    private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddGroup()
     {
@@ -191,13 +233,20 @@ public class GroupViewModel : BaseViewModel, ILoadable
         dialog.ShowDialog();
         return isSaved;
     }
-    private void GenerateReport()
-    {
-        using var workbook = new ClosedXML.Excel.XLWorkbook();
-        var worksheet = workbook.Worksheets.Add("Звіт");
 
-        if (SelectedGroup == null)
+    private void ExportToExcel()
+    {
+        var dialog = new SaveFileDialog
         {
+            Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+            FileName = "Groups_Report.xlsx"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Групи");
+
             worksheet.Cell(1, 1).Value = "ID";
             worksheet.Cell(1, 2).Value = "Назва групи";
             worksheet.Cell(1, 3).Value = "Факультет";
@@ -205,106 +254,85 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
             for (int i = 0; i < Groups.Count; i++)
             {
-                var group = Groups[i];
-                worksheet.Cell(i + 2, 1).Value = group.GroupID;
-                worksheet.Cell(i + 2, 2).Value = group.GroupName;
-                worksheet.Cell(i + 2, 3).Value = group.Faculty?.FacultyName;
-                worksheet.Cell(i + 2, 4).Value = group.Curator?.FullName;
+                var g = Groups[i];
+                worksheet.Cell(i + 2, 1).Value = g.GroupID;
+                worksheet.Cell(i + 2, 2).Value = g.GroupName;
+                worksheet.Cell(i + 2, 3).Value = g.Faculty?.FacultyName ?? "";
+                worksheet.Cell(i + 2, 4).Value = g.Curator?.FullName ?? "";
             }
-        }
-        else
-        {
-            worksheet.Cell(1, 1).Value = $"Група: {SelectedGroup.GroupName}";
-            worksheet.Cell(2, 1).Value = "ID";
-            worksheet.Cell(2, 2).Value = "Ім'я";
-            worksheet.Cell(2, 3).Value = "Прізвище";
 
-            for (int i = 0; i < StudentsInGroup.Count; i++)
-            {
-                var student = StudentsInGroup[i];
-                worksheet.Cell(i + 3, 1).Value = student.StudentID;
-                worksheet.Cell(i + 3, 2).Value = student.FirstName;
-                worksheet.Cell(i + 3, 3).Value = student.LastName;
-            }
-        }
-
-        worksheet.Columns().AdjustToContents();
-
-        var saveDialog = new Microsoft.Win32.SaveFileDialog
-        {
-            FileName = "Групи_Звіт",
-            DefaultExt = ".xlsx",
-            Filter = "Excel файли (*.xlsx)|*.xlsx"
-        };
-
-        if (saveDialog.ShowDialog() == true)
-        {
-            workbook.SaveAs(saveDialog.FileName);
+            worksheet.Columns().AdjustToContents();
+            workbook.SaveAs(dialog.FileName);
         }
     }
-    private async Task ImportFromExcel()
+
+    private async void ImportFromExcel()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog
+        var dialog = new OpenFileDialog
         {
-            Filter = "Excel файли (*.xlsx)|*.xlsx",
-            Title = "Виберіть Excel-файл з групами"
+            Filter = "Excel Files (*.xlsx)|*.xlsx",
+            Title = "Виберіть файл Excel"
         };
 
         if (dialog.ShowDialog() == true)
         {
-            using var workbook = new ClosedXML.Excel.XLWorkbook(dialog.FileName);
-            var worksheet = workbook.Worksheet(1);
-            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропустити заголовки
-
-            var existingGroups = await _groupService.GetAllGroupsAsync();
-            var faculties = await _facultyService.GetAllFacultiesAsync();
-            var teachers = await _teacherService.GetAllTeachersAsync();
-
-            int importedCount = 0;
-            int duplicateCount = 0;
-
-            foreach (var row in rows)
+            try
             {
-                var groupName = row.Cell(2).GetString().Trim();
-                var facultyName = row.Cell(3).GetString().Trim();
-                var curatorFullName = row.Cell(4).GetString().Trim();
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheets.First();
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                bool exists = existingGroups.Any(g =>
-                    g.GroupName.Equals(groupName, System.StringComparison.OrdinalIgnoreCase));
+                var existingGroups = await _groupService.GetAllGroupsAsync();
+                var existingFaculties = await _facultyService.GetAllFacultiesAsync();
+                var existingTeachers = await _teacherService.GetAllTeachersAsync();
 
-                if (!exists)
+                int importedCount = 0;
+                int duplicateCount = 0;
+
+                foreach (var row in rows)
                 {
-                    var faculty = faculties.FirstOrDefault(f =>
-                        f.FacultyName.Equals(facultyName, System.StringComparison.OrdinalIgnoreCase));
+                    var groupName = row.Cell(1).GetString().Trim();
+                    var facultyName = row.Cell(2).GetString().Trim();
+                    var curatorName = row.Cell(3).GetString().Trim();
 
-                    var curator = teachers.FirstOrDefault(t =>
-                        t.FullName.Equals(curatorFullName, System.StringComparison.OrdinalIgnoreCase));
+                    bool exists = existingGroups.Any(g =>
+                        g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-                    var newGroup = new Group
+                    if (!exists)
                     {
-                        GroupName = groupName,
-                        FacultyID = faculty?.FacultyID ?? 0,
-                        CuratorID = curator?.TeacherID
-                    };
+                        var faculty = existingFaculties.FirstOrDefault(f =>
+                            f.FacultyName.Equals(facultyName, StringComparison.OrdinalIgnoreCase));
 
-                    await _groupService.AddGroupAsync(newGroup);
-                    importedCount++;
+                        var curator = existingTeachers.FirstOrDefault(t =>
+                            t.FullName.Equals(curatorName, StringComparison.OrdinalIgnoreCase));
+
+                        var group = new Group
+                        {
+                            GroupName = groupName,
+                            FacultyID = faculty?.FacultyID ?? 0,
+                            CuratorID = curator?.TeacherID
+                        };
+                        await _groupService.AddGroupAsync(group);
+                        importedCount++;
+                    }
+                    else
+                    {
+                        duplicateCount++;
+                    }
                 }
-                else
-                {
-                    duplicateCount++;
-                }
+
+                await LoadDataAsync();
+                ShowMessage($"Імпорт завершено. Додано: {importedCount}, пропущено дублікати: {duplicateCount}");
             }
-
-            await LoadDataAsync();
-
-            System.Windows.MessageBox.Show(
-                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
-                "Результат імпорту",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Information
-            );
+            catch (Exception ex)
+            {
+                ShowMessage("Помилка імпорту: " + ex.Message);
+            }
         }
     }
 
+    private void ShowMessage(string message)
+    {
+        System.Windows.MessageBox.Show(message);
+    }
 }

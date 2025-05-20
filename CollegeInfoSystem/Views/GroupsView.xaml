@@ -7,32 +7,48 @@
     <Grid>
         <StackPanel>
 
-            <!-- 🔍 Панель фільтрів -->
+            <!-- Пошук і фільтри -->
             <StackPanel Orientation="Horizontal" Margin="10">
-                <StackPanel Margin="5">
-                    <TextBlock Text="Назва групи"/>
-                    <TextBox Width="120" Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Margin="5">
-                    <TextBlock Text="Факультет"/>
-                    <TextBox Width="120" Text="{Binding FacultyFilter, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Margin="5">
-                    <TextBlock Text="Куратор"/>
-                    <TextBox Width="120" Text="{Binding CuratorFilter, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
-                <Button Content="Згенерувати звіт" Command="{Binding GenerateReportCommand}" Width="150" Margin="5"/>
-                <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5" />
+                <TextBox Width="200" Margin="5"
+                         Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Пошук за назвою групи"/>
 
+                <ComboBox Width="200" Margin="5"
+                          ItemsSource="{Binding Faculties}"
+                          DisplayMemberPath="FacultyName"
+                          SelectedItem="{Binding SelectedFaculty}"
+                          ToolTip="Виберіть факультет"/>
+
+                <ComboBox Width="200" Margin="5"
+                          ItemsSource="{Binding Curators}"
+                          DisplayMemberPath="FullName"
+                          SelectedItem="{Binding SelectedCurator}"
+                          ToolTip="Виберіть куратора"/>
+
+                <Button Content="Очистити фільтр" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
+                <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
+
+                <!-- Імпорт з Excel (тільки для admin) -->
+                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
 
-            <!-- 📋 Список груп -->
-            <ListView ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}">
+            <!-- Список груп -->
+            <ListView ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" Margin="10">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding GroupID}" Width="50"/>
-                        <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="100"/>
+                        <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="150"/>
                         <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding Faculty.FacultyName}" Width="150"/>
                         <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding Curator.FullName}" Width="150"/>
                     </GridView>
@@ -41,14 +57,63 @@
 
             <!-- Кнопки CRUD -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button Content="Додати" Command="{Binding AddGroupCommand}" Width="100" Margin="5"/>
-                <Button Content="Оновити" Command="{Binding UpdateGroupCommand}" Width="100" Margin="5"/>
-                <Button Content="Видалити" Command="{Binding DeleteGroupCommand}" Width="100" Margin="5"/>
+
+                <!-- Додати (admin, teacher) -->
+                <Button Content="Додати" Command="{Binding AddGroupCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Оновити (admin, teacher) -->
+                <Button Content="Оновити" Command="{Binding UpdateGroupCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Видалити (admin, teacher) -->
+                <Button Content="Видалити" Command="{Binding DeleteGroupCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
             </StackPanel>
 
-            <!-- Студенти групи -->
+            <!-- Студенти в групі -->
             <TextBlock Text="Студенти в групі" FontWeight="Bold" Margin="10"/>
-            <ListView ItemsSource="{Binding StudentsInGroup}">
+            <ListView ItemsSource="{Binding StudentsInGroup}" Margin="10">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="50"/>
@@ -57,6 +122,7 @@
                     </GridView>
                 </ListView.View>
             </ListView>
+
         </StackPanel>
     </Grid>
 </UserControl>

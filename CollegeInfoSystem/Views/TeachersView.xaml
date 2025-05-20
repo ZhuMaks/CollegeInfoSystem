@@ -6,26 +6,42 @@
              mc:Ignorable="d">
     <Grid Margin="10">
         <StackPanel>
+
             <!-- Поля фільтрації -->
             <StackPanel Orientation="Horizontal" Margin="0 0 0 10" HorizontalAlignment="Left">
                 <TextBox Width="200"
-             Margin="5"
-             VerticalAlignment="Center"
-             Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}" 
-             ToolTip="Пошук за прізвищем" />
+                         Margin="5"
+                         VerticalAlignment="Center"
+                         Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}" 
+                         ToolTip="Пошук за прізвищем" />
                 <CheckBox Content="Лише куратори"
-              VerticalAlignment="Center"
-              IsChecked="{Binding IsCuratorOnly}" 
-              Margin="5"/>
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding IsCuratorOnly}" 
+                          Margin="5"/>
                 <Button Content="Очистити фільтр"
-            Command="{Binding ClearFilterCommand}"
-            Margin="5"
-            VerticalAlignment="Center"/>
-            <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
-            <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5" />
+                        Command="{Binding ClearFilterCommand}"
+                        Margin="5"
+                        VerticalAlignment="Center"/>
+                <Button Content="Звіт у Excel" 
+                        Command="{Binding ExportToExcelCommand}" 
+                        Width="150" Margin="5"/>
 
+                <!-- Тільки для адміністратора -->
+                <Button Content="Імпортувати з Excel" 
+                        Command="{Binding ImportFromExcelCommand}" 
+                        Width="150" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
-
 
             <!-- Список викладачів -->
             <ListView ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}">
@@ -41,11 +57,46 @@
                 </ListView.View>
             </ListView>
 
-            <!-- Кнопки -->
+            <!-- Кнопки дій (видимі лише для admin) -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button Content="Додати" Command="{Binding AddTeacherCommand}" Width="100" Margin="5"/>
-                <Button Content="Оновити" Command="{Binding UpdateTeacherCommand}" Width="100" Margin="5"/>
-                <Button Content="Видалити" Command="{Binding DeleteTeacherCommand}" Width="100" Margin="5"/>
+                <Button Content="Додати" Command="{Binding AddTeacherCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Content="Оновити" Command="{Binding UpdateTeacherCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Content="Видалити" Command="{Binding DeleteTeacherCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
         </StackPanel>
     </Grid>
