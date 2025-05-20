@@ -22,21 +22,33 @@ namespace CollegeInfoSystem.ViewModels
         public string NewUsername
         {
             get => _newUsername;
-            set => SetProperty(ref _newUsername, value);
+            set
+            {
+                if (SetProperty(ref _newUsername, value))
+                    AddUserCommand.NotifyCanExecuteChanged();
+            }
         }
 
         private string _newPassword = "";
         public string NewPassword
         {
             get => _newPassword;
-            set => SetProperty(ref _newPassword, value);
+            set
+            {
+                if (SetProperty(ref _newPassword, value))
+                    AddUserCommand.NotifyCanExecuteChanged();
+            }
         }
 
         private string? _newRole;
         public string? NewRole
         {
             get => _newRole;
-            set => SetProperty(ref _newRole, value);
+            set
+            {
+                if (SetProperty(ref _newRole, value))
+                    AddUserCommand.NotifyCanExecuteChanged();
+            }
         }
 
         private User? _selectedUser;
@@ -50,16 +62,31 @@ namespace CollegeInfoSystem.ViewModels
             }
         }
 
+        private string _currentUserRole;
+        public string CurrentUserRole
+        {
+            get => _currentUserRole;
+            set
+            {
+                if (SetProperty(ref _currentUserRole, value))
+                {
+                    AddUserCommand.NotifyCanExecuteChanged();
+                    DeleteUserCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
         public IRelayCommand AddUserCommand { get; }
         public IRelayCommand DeleteUserCommand { get; }
 
-        public UsersViewModel(UserService userService, CollegeDbContext context)
+        public UsersViewModel(UserService userService, CollegeDbContext context, string currentUserRole)
         {
             _userService = userService;
             _context = context;
+            _currentUserRole = currentUserRole;
 
-            AddUserCommand = new RelayCommand(async () => await AddUser());
-            DeleteUserCommand = new RelayCommand(async () => await DeleteUser(), () => SelectedUser != null);
+            AddUserCommand = new RelayCommand(async () => await AddUser(), CanExecuteAddUser);
+            DeleteUserCommand = new RelayCommand(async () => await DeleteUser(), CanExecuteDeleteUser);
         }
 
         public async Task LoadDataAsync()
@@ -70,33 +97,42 @@ namespace CollegeInfoSystem.ViewModels
                 Users.Add(user);
         }
 
+        private bool CanExecuteAddUser()
+        {
+            return CurrentUserRole == "admin"
+                && !string.IsNullOrWhiteSpace(NewUsername)
+                && !string.IsNullOrWhiteSpace(NewPassword)
+                && !string.IsNullOrWhiteSpace(NewRole);
+        }
+
+        private bool CanExecuteDeleteUser()
+        {
+            return CurrentUserRole == "admin" && SelectedUser != null;
+        }
+
         private async Task AddUser()
         {
-            if (!string.IsNullOrWhiteSpace(NewUsername) &&
-                !string.IsNullOrWhiteSpace(NewPassword) &&
-                !string.IsNullOrWhiteSpace(NewRole))
+            if (!CanExecuteAddUser()) return;
+
+            if (await _userService.RegisterAsync(NewUsername, NewPassword, NewRole!))
             {
-                if (await _userService.RegisterAsync(NewUsername, NewPassword, NewRole))
-                {
-                    await LoadDataAsync();
+                await LoadDataAsync();
 
-                    NewUsername = "";
-                    NewPassword = "";
-                    NewRole = null;
+                NewUsername = "";
+                NewPassword = "";
+                NewRole = null;
 
-                    OnClearFieldsRequested?.Invoke();
-                }
+                OnClearFieldsRequested?.Invoke();
             }
         }
 
         private async Task DeleteUser()
         {
-            if (SelectedUser != null)
-            {
-                _context.Users.Remove(SelectedUser);
-                await _context.SaveChangesAsync();
-                await LoadDataAsync();
-            }
+            if (!CanExecuteDeleteUser()) return;
+
+            _context.Users.Remove(SelectedUser!);
+            await _context.SaveChangesAsync();
+            await LoadDataAsync();
         }
     }
 }

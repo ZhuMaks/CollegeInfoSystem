@@ -9,8 +9,10 @@ using System.Linq;
 using System.Windows.Input;
 using ClosedXML.Excel;
 using Microsoft.Win32;
+using System;
 
 namespace CollegeInfoSystem.ViewModels;
+
 public class StudentViewModel : BaseViewModel, ILoadable
 {
     private readonly StudentService _studentService;
@@ -18,7 +20,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
     public ObservableCollection<Student> Students { get; set; } = new();
     private List<Student> _allStudents = new();
-
     public ObservableCollection<Group> Groups { get; set; } = new();
 
     private Student _selectedStudent;
@@ -29,8 +30,8 @@ public class StudentViewModel : BaseViewModel, ILoadable
         {
             _selectedStudent = value;
             OnPropertyChanged();
-            ((RelayCommand)UpdateStudentCommand).NotifyCanExecuteChanged();
-            ((RelayCommand)DeleteStudentCommand).NotifyCanExecuteChanged();
+            UpdateStudentCommand.NotifyCanExecuteChanged();
+            DeleteStudentCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -58,6 +59,18 @@ public class StudentViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private string _currentUserRole;
+    public string CurrentUserRole
+    {
+        get => _currentUserRole;
+        set
+        {
+            _currentUserRole = value;
+            OnPropertyChanged();
+            UpdateCommandsCanExecute();
+        }
+    }
+
     public RelayCommand LoadStudentsCommand { get; }
     public RelayCommand AddStudentCommand { get; }
     public RelayCommand UpdateStudentCommand { get; }
@@ -66,22 +79,30 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public RelayCommand ExportToExcelCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
 
-
-    public StudentViewModel(StudentService studentService, GroupService groupService)
+    public StudentViewModel(StudentService studentService, GroupService groupService, string currentUserRole)
     {
         _studentService = studentService;
         _groupService = groupService;
+        _currentUserRole = currentUserRole;
 
         LoadStudentsCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddStudentCommand = new RelayCommand(AddStudent);
-        UpdateStudentCommand = new RelayCommand(UpdateStudent, () => SelectedStudent != null);
-        DeleteStudentCommand = new RelayCommand(async () => await DeleteStudentAsync(), () => SelectedStudent != null);
+        AddStudentCommand = new RelayCommand(AddStudent, CanExecuteAddStudent);
+        UpdateStudentCommand = new RelayCommand(UpdateStudent, CanExecuteUpdateStudent);
+        DeleteStudentCommand = new RelayCommand(async () => await DeleteStudentAsync(), CanExecuteDeleteStudent);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
-        ExportToExcelCommand = new RelayCommand(ExportToExcel);
-        ImportFromExcelCommand = new RelayCommand(ImportFromExcel);
-
+        ExportToExcelCommand = new RelayCommand(ExportToExcel, CanExecuteExport);
+        ImportFromExcelCommand = new RelayCommand(ImportFromExcel, CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+    }
+
+    private void UpdateCommandsCanExecute()
+    {
+        AddStudentCommand.NotifyCanExecuteChanged();
+        UpdateStudentCommand.NotifyCanExecuteChanged();
+        DeleteStudentCommand.NotifyCanExecuteChanged();
+        ExportToExcelCommand.NotifyCanExecuteChanged();
+        ImportFromExcelCommand.NotifyCanExecuteChanged();
     }
 
     private void ClearFilters()
@@ -122,6 +143,12 @@ public class StudentViewModel : BaseViewModel, ILoadable
         foreach (var s in filtered)
             Students.Add(s);
     }
+
+    private bool CanExecuteAddStudent() => CurrentUserRole is "admin" or "teacher";
+    private bool CanExecuteUpdateStudent() => SelectedStudent != null && CurrentUserRole is "admin" or "teacher";
+    private bool CanExecuteDeleteStudent() => SelectedStudent != null && CurrentUserRole is "admin" or "teacher";
+    private bool CanExecuteExport() => true; 
+    private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddStudent()
     {
@@ -180,7 +207,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Студенти");
 
-            // Заголовки
             worksheet.Cell(1, 1).Value = "ID";
             worksheet.Cell(1, 2).Value = "Ім'я";
             worksheet.Cell(1, 3).Value = "Прізвище";
@@ -190,7 +216,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
             worksheet.Cell(1, 7).Value = "Дата народження";
             worksheet.Cell(1, 8).Value = "Адреса";
 
-            // Дані
             for (int i = 0; i < Students.Count; i++)
             {
                 var s = Students[i];
@@ -204,12 +229,11 @@ public class StudentViewModel : BaseViewModel, ILoadable
                 worksheet.Cell(i + 2, 8).Value = s.Address;
             }
 
-            // Автоширина колонок
             worksheet.Columns().AdjustToContents();
-
             workbook.SaveAs(dialog.FileName);
         }
     }
+
     private async void ImportFromExcel()
     {
         var dialog = new OpenFileDialog
@@ -224,7 +248,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
             {
                 using var workbook = new XLWorkbook(dialog.FileName);
                 var worksheet = workbook.Worksheets.First();
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропускаємо заголовок
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
                 var existingStudents = await _studentService.GetAllStudentsAsync();
 
@@ -241,7 +265,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
                     var address = row.Cell(6).GetString().Trim();
                     var groupName = row.Cell(7).GetString().Trim();
 
-                    // Перевірка на дублікати
                     bool exists = existingStudents.Any(s =>
                         s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
                         s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
@@ -271,7 +294,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
                     {
                         duplicateCount++;
                     }
-
                 }
 
                 await LoadDataAsync();
@@ -289,6 +311,4 @@ public class StudentViewModel : BaseViewModel, ILoadable
             }
         }
     }
-
-
 }

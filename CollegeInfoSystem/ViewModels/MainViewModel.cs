@@ -68,17 +68,17 @@ namespace CollegeInfoSystem.ViewModels
             _staffView = new StaffView { DataContext = _staffViewModel };
 
             OpenStudentsViewCommand = new RelayCommand(() => SetCurrentView(_studentsView, _studentViewModel));
-            OpenTeachersViewCommand = new RelayCommand(() => SetCurrentView(_teachersView, _teacherViewModel), () => _userRole != "guest");
-            OpenGroupsViewCommand = new RelayCommand(() => SetCurrentView(_groupsView, _groupViewModel), () => _userRole != "guest");
+            OpenTeachersViewCommand = new RelayCommand(() => SetCurrentView(_teachersView, _teacherViewModel));
+            OpenGroupsViewCommand = new RelayCommand(() => SetCurrentView(_groupsView, _groupViewModel));
             OpenScheduleViewCommand = new RelayCommand(() => SetCurrentView(_scheduleView, _scheduleViewModel));
-            OpenFacultyViewCommand = new RelayCommand(() => SetCurrentView(_facultyView, _facultyViewModel), () => _userRole != "guest");
-            OpenStaffViewCommand = new RelayCommand(() => SetCurrentView(_staffView, _staffViewModel), () => _userRole != "guest");
+            OpenFacultyViewCommand = new RelayCommand(() => SetCurrentView(_facultyView, _facultyViewModel));
+            OpenStaffViewCommand = new RelayCommand(() => SetCurrentView(_staffView, _staffViewModel));
 
             if (_userRole == "admin")
             {
                 var dbContext = new CollegeDbContext();
                 var userService = new UserService(dbContext);
-                _usersViewModel = new UsersViewModel(userService, dbContext);
+                _usersViewModel = new UsersViewModel(userService, dbContext, _userRole);
                 _usersView = new UsersView { DataContext = _usersViewModel };
                 OpenUsersViewCommand = new RelayCommand(() => SetCurrentView(_usersView, _usersViewModel));
             }

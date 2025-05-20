@@ -29,7 +29,7 @@ namespace CollegeInfoSystem
                 var scheduleService = new ScheduleService(dbContext);
                 var staffService = new StaffService(dbContext);
 
-                var studentViewModel = new StudentViewModel(studentService, groupService);
+                var studentViewModel = new StudentViewModel(studentService, groupService, CurrentUserRole);
                 var teacherViewModel = new TeacherViewModel(teacherService);
                 var facultyViewModel = new FacultyViewModel(facultyService);
                 var staffViewModel = new StaffViewModel(staffService);

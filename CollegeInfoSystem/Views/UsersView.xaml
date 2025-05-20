@@ -7,22 +7,34 @@
     <Grid>
         <StackPanel>
             <TextBlock Text="Ім'я користувача:"/>
-            <TextBox x:Name="usernameTextBox" Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
+            <TextBox x:Name="usernameTextBox" 
+                     Text="{Binding NewUsername, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                     Margin="5"/>
 
-            <PasswordBox x:Name="passwordBox" PasswordChanged="PasswordBox_PasswordChanged" Margin="5"/>
+            <PasswordBox x:Name="passwordBox" 
+                         PasswordChanged="PasswordBox_PasswordChanged" 
+                         Margin="5"/>
 
             <ComboBox x:Name="roleComboBox"
-          SelectedValue="{Binding NewRole, UpdateSourceTrigger=PropertyChanged}" 
-          SelectedValuePath="Content" Margin="5">
+                      SelectedValue="{Binding NewRole, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                      SelectedValuePath="Content" Margin="5">
                 <ComboBoxItem Content="admin"/>
                 <ComboBoxItem Content="teacher"/>
                 <ComboBoxItem Content="guest"/>
             </ComboBox>
 
+            <Button Content="Додати користувача" 
+                    Command="{Binding AddUserCommand}" 
+                    Margin="5"/>
 
-            <Button Content="Додати користувача" Command="{Binding AddUserCommand}" Margin="5"/>
-            <ListBox ItemsSource="{Binding Users}" DisplayMemberPath="Username" SelectedItem="{Binding SelectedUser}" Margin="5"/>
-            <Button Content="Видалити користувача" Command="{Binding DeleteUserCommand}" Margin="5"/>
+            <ListBox ItemsSource="{Binding Users}" 
+                     DisplayMemberPath="Username" 
+                     SelectedItem="{Binding SelectedUser}" 
+                     Margin="5"/>
+
+            <Button Content="Видалити користувача" 
+                    Command="{Binding DeleteUserCommand}" 
+                    Margin="5"/>
         </StackPanel>
     </Grid>
 </UserControl>
