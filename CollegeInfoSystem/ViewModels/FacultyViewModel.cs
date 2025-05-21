@@ -1,11 +1,11 @@
 ﻿using ClosedXML.Excel;
 using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
-using CollegeInfoSystem.ViewModels;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -25,8 +25,20 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         {
             _selectedFaculty = value;
             OnPropertyChanged();
-            ((RelayCommand)UpdateFacultyCommand).NotifyCanExecuteChanged();
-            ((RelayCommand)DeleteFacultyCommand).NotifyCanExecuteChanged();
+            UpdateFacultyCommand.NotifyCanExecuteChanged();
+            DeleteFacultyCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private string _currentUserRole;
+    public string CurrentUserRole
+    {
+        get => _currentUserRole;
+        set
+        {
+            _currentUserRole = value;
+            OnPropertyChanged();
+            UpdateCommandCanExecute();
         }
     }
 
@@ -36,17 +48,32 @@ public class FacultyViewModel : BaseViewModel, ILoadable
     public RelayCommand DeleteFacultyCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
 
-    public FacultyViewModel(FacultyService facultyService)
+    public FacultyViewModel(FacultyService facultyService, string currentUserRole)
     {
         _facultyService = facultyService;
+        _currentUserRole = currentUserRole;
+
         LoadFacultiesCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddFacultyCommand = new RelayCommand(AddFaculty);
-        UpdateFacultyCommand = new RelayCommand(UpdateFaculty, () => SelectedFaculty != null);
-        DeleteFacultyCommand = new RelayCommand(async () => await DeleteFacultyAsync(), () => SelectedFaculty != null);
-        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
+        AddFacultyCommand = new RelayCommand(AddFaculty, CanExecuteAddFaculty);
+        UpdateFacultyCommand = new RelayCommand(UpdateFaculty, CanExecuteUpdateFaculty);
+        DeleteFacultyCommand = new RelayCommand(async () => await DeleteFacultyAsync(), CanExecuteDeleteFaculty);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel(), CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
     }
+
+    private void UpdateCommandCanExecute()
+    {
+        AddFacultyCommand.NotifyCanExecuteChanged();
+        UpdateFacultyCommand.NotifyCanExecuteChanged();
+        DeleteFacultyCommand.NotifyCanExecuteChanged();
+        ImportFromExcelCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanExecuteAddFaculty() => CurrentUserRole == "admin";
+    private bool CanExecuteUpdateFaculty() => SelectedFaculty != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteFaculty() => SelectedFaculty != null && CurrentUserRole == "admin";
+    private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     public async Task LoadDataAsync()
     {
@@ -68,13 +95,10 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         }
     }
 
-
     private async void UpdateFaculty()
     {
-        if (SelectedFaculty != null)
+        if (SelectedFaculty != null && OpenFacultyDialog(SelectedFaculty))
         {
-            OpenFacultyDialog(SelectedFaculty);
-
             await _facultyService.UpdateFacultyAsync(SelectedFaculty);
             await LoadDataAsync();
         }
@@ -104,6 +128,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         dialog.ShowDialog();
         return isSaved;
     }
+
     private async Task ImportFromExcel()
     {
         var dialog = new OpenFileDialog
@@ -156,6 +181,4 @@ public class FacultyViewModel : BaseViewModel, ILoadable
             );
         }
     }
-
-
 }

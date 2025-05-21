@@ -6,21 +6,72 @@
              mc:Ignorable="d">
     <Grid>
         <StackPanel>
-            <ListView ItemsSource="{Binding Faculties}" SelectedItem="{Binding SelectedFaculty}">
+            <ListView ItemsSource="{Binding Faculties}" SelectedItem="{Binding SelectedFaculty}" Margin="10">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding FacultyID}" Width="50"/>
-                        <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding FacultyName}" Width="200"/>
-                        
+                        <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding FacultyName}" Width="300"/>
                     </GridView>
                 </ListView.View>
             </ListView>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button Content="Додати" Command="{Binding AddFacultyCommand}" Width="100" Margin="5"/>
-                <Button Content="Оновити" Command="{Binding UpdateFacultyCommand}" Width="100" Margin="5"/>
-                <Button Content="Видалити" Command="{Binding DeleteFacultyCommand}" Width="100" Margin="5"/>
-                <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5"/>
+
+                <!-- Додати (admin) -->
+                <Button Content="Додати" Command="{Binding AddFacultyCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Оновити (admin) -->
+                <Button Content="Оновити" Command="{Binding UpdateFacultyCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Видалити (admin) -->
+                <Button Content="Видалити" Command="{Binding DeleteFacultyCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Імпорт з Excel (admin) -->
+                <Button Content="Імпортувати з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
 
             </StackPanel>
         </StackPanel>
