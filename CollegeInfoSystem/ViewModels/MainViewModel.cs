@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Windows;
+using System.Windows.Input;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -43,6 +44,7 @@ namespace CollegeInfoSystem.ViewModels
         public ICommand OpenScheduleViewCommand { get; }
         public ICommand OpenFacultyViewCommand { get; }
         public ICommand OpenStaffViewCommand { get; }
+        public ICommand LogoutCommand { get; }
         public ICommand? OpenUsersViewCommand { get; }
 
         public string UserRole => _userRole;
@@ -83,7 +85,55 @@ namespace CollegeInfoSystem.ViewModels
                 OpenUsersViewCommand = new RelayCommand(() => SetCurrentView(_usersView, _usersViewModel));
             }
 
+            LogoutCommand = new RelayCommand(Logout);
             CurrentView = _studentsView;
+        }
+
+        private void Logout()
+        {
+            var loginWindow = new LoginWindow();
+            var loginViewModel = new LoginViewModel();
+            loginWindow.DataContext = loginViewModel;
+
+            loginViewModel.LoginSucceeded += role =>
+            {
+                App.CurrentUserRole = role;
+
+                var dbContext = new CollegeDbContext();
+                var studentService = new StudentService(dbContext);
+                var teacherService = new TeacherService(dbContext);
+                var facultyService = new FacultyService(dbContext);
+                var groupService = new GroupService(dbContext);
+                var scheduleService = new ScheduleService(dbContext);
+                var staffService = new StaffService(dbContext);
+
+                var studentViewModel = new StudentViewModel(studentService, groupService, role);
+                var teacherViewModel = new TeacherViewModel(teacherService, role);
+                var facultyViewModel = new FacultyViewModel(facultyService, role);
+                var staffViewModel = new StaffViewModel(staffService, role);
+                var scheduleViewModel = new ScheduleViewModel(scheduleService, groupService, teacherService, role);
+                var groupViewModel = new GroupViewModel(groupService, facultyService, teacherService, studentService, role);
+
+                var newMainViewModel = new MainViewModel(role, studentViewModel, teacherViewModel, groupViewModel, scheduleViewModel, facultyViewModel, staffViewModel);
+                var newMainWindow = new MainWindow(role)
+                {
+                    DataContext = newMainViewModel
+                };
+
+                loginWindow.Close();
+                newMainWindow.Show();
+            };
+
+            loginWindow.Show();
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                if (window is MainWindow)
+                {
+                    window.Close();
+                    break;
+                }
+            }
         }
 
         private async void SetCurrentView(object view, BaseViewModel viewModel)

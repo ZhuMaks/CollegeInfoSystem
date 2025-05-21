@@ -1,23 +1,28 @@
 ﻿<Window x:Class="CollegeInfoSystem.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:CollegeInfoSystem"
-        Title="College Information System" Height="450" Width="800">
+        Title="College Information System" Height="600" Width="1000">
 
-    <Grid>
-        <StackPanel>
-            <Button Content="Студенти" Command="{Binding OpenStudentsViewCommand}" Width="100" Height="30" Margin="10"/>
-            <Button Content="Викладачі" Command="{Binding OpenTeachersViewCommand}" Width="100" Height="30" Margin="10"/>
-            <Button Content="Групи" Command="{Binding OpenGroupsViewCommand}" Width="100" Height="30" Margin="10"/>
-            <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Width="100" Height="30" Margin="10"/>
-            <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Width="100" Height="30" Margin="10"/>
-            <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Width="100" Height="30" Margin="10" />
-            <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Width="100" Height="30" Margin="10" Visibility="Collapsed"/>
+    <DockPanel>
 
+        <Border Background="LightGray" Padding="10" DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                <TextBlock Text="Роль: " FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding UserRole}" Margin="5,0" VerticalAlignment="Center"/>
+                <Button Content="Вийти" Command="{Binding LogoutCommand}" HorizontalAlignment="Right" Margin="20,0,0,0"/>
+            </StackPanel>
+        </Border>
 
-
-            <!-- Контейнер для динамічних вьюшок -->
-            <ContentControl Content="{Binding CurrentView}" />
+        <StackPanel DockPanel.Dock="Left" Width="130" Background="LightSteelBlue">
+            <Button Content="Студенти" Command="{Binding OpenStudentsViewCommand}" Margin="5" />
+            <Button Content="Викладачі" Command="{Binding OpenTeachersViewCommand}" Margin="5" />
+            <Button Content="Групи" Command="{Binding OpenGroupsViewCommand}" Margin="5" />
+            <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Margin="5" />
+            <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Margin="5" />
+            <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Margin="5" />
+            <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Margin="5" Visibility="Collapsed"/>
         </StackPanel>
-    </Grid>
+
+        <ContentControl Content="{Binding CurrentView}" />
+    </DockPanel>
 </Window>
