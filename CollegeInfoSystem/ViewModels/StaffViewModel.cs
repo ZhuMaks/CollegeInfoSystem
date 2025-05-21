@@ -13,7 +13,6 @@ namespace CollegeInfoSystem.ViewModels;
 public class StaffViewModel : BaseViewModel, ILoadable
 {
     private readonly StaffService _staffService;
-
     private List<Staff> _allStaff;
 
     public ObservableCollection<Staff> StaffList { get; set; } = new();
@@ -26,8 +25,8 @@ public class StaffViewModel : BaseViewModel, ILoadable
         {
             _selectedStaff = value;
             OnPropertyChanged();
-            ((RelayCommand)UpdateStaffCommand).NotifyCanExecuteChanged();
-            ((RelayCommand)DeleteStaffCommand).NotifyCanExecuteChanged();
+            UpdateStaffCommand.NotifyCanExecuteChanged();
+            DeleteStaffCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -55,6 +54,18 @@ public class StaffViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private string _currentUserRole;
+    public string CurrentUserRole
+    {
+        get => _currentUserRole;
+        set
+        {
+            _currentUserRole = value;
+            OnPropertyChanged();
+            UpdateCommandStates();
+        }
+    }
+
     public RelayCommand LoadStaffCommand { get; }
     public RelayCommand AddStaffCommand { get; }
     public RelayCommand UpdateStaffCommand { get; }
@@ -63,18 +74,29 @@ public class StaffViewModel : BaseViewModel, ILoadable
     public RelayCommand ExportToExcelCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
 
-    public StaffViewModel(StaffService staffService)
+    public StaffViewModel(StaffService staffService, string currentUserRole)
     {
         _staffService = staffService;
+        _currentUserRole = currentUserRole;
+
         LoadStaffCommand = new RelayCommand(async () => await LoadDataAsync());
-        AddStaffCommand = new RelayCommand(AddStaff);
-        UpdateStaffCommand = new RelayCommand(UpdateStaff, () => SelectedStaff != null);
-        DeleteStaffCommand = new RelayCommand(async () => await DeleteStaffAsync(), () => SelectedStaff != null);
+        AddStaffCommand = new RelayCommand(AddStaff, CanExecuteAddOrEdit);
+        UpdateStaffCommand = new RelayCommand(UpdateStaff, CanExecuteEdit);
+        DeleteStaffCommand = new RelayCommand(async () => await DeleteStaffAsync(), CanExecuteDelete);
         ClearFiltersCommand = new RelayCommand(ClearFilters);
-        ExportToExcelCommand = new RelayCommand(ExportToExcel);
-        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel());
+        ExportToExcelCommand = new RelayCommand(ExportToExcel, CanExecuteExport);
+        ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel(), CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+    }
+
+    private void UpdateCommandStates()
+    {
+        AddStaffCommand.NotifyCanExecuteChanged();
+        UpdateStaffCommand.NotifyCanExecuteChanged();
+        DeleteStaffCommand.NotifyCanExecuteChanged();
+        ExportToExcelCommand.NotifyCanExecuteChanged();
+        ImportFromExcelCommand.NotifyCanExecuteChanged();
     }
 
     public async Task LoadDataAsync()
@@ -88,23 +110,28 @@ public class StaffViewModel : BaseViewModel, ILoadable
         var filtered = _allStaff.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(LastNameFilter))
-            filtered = filtered.Where(s => s.LastName.Contains(LastNameFilter, System.StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(s => s.LastName.Contains(LastNameFilter, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrWhiteSpace(PositionFilter))
-            filtered = filtered.Where(s => s.Position.Contains(PositionFilter, System.StringComparison.OrdinalIgnoreCase));
+            filtered = filtered.Where(s => s.Position.Contains(PositionFilter, StringComparison.OrdinalIgnoreCase));
 
         StaffList.Clear();
         foreach (var staff in filtered)
-        {
             StaffList.Add(staff);
-        }
     }
 
     private void ClearFilters()
     {
         LastNameFilter = string.Empty;
         PositionFilter = string.Empty;
+        ApplyFilters();
     }
+
+    private bool CanExecuteAddOrEdit() => CurrentUserRole == "admin";
+    private bool CanExecuteEdit() => SelectedStaff != null && CurrentUserRole == "admin";
+    private bool CanExecuteDelete() => SelectedStaff != null && CurrentUserRole == "admin";
+    private bool CanExecuteExport() => true; // всім доступно
+    private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddStaff()
     {
@@ -118,9 +145,8 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
     private async void UpdateStaff()
     {
-        if (SelectedStaff != null)
+        if (SelectedStaff != null && OpenStaffDialog(SelectedStaff))
         {
-            OpenStaffDialog(SelectedStaff);
             await _staffService.UpdateStaffAsync(SelectedStaff);
             await LoadDataAsync();
         }
@@ -164,15 +190,13 @@ public class StaffViewModel : BaseViewModel, ILoadable
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Працівники");
 
-            // Заголовки
             worksheet.Cell(1, 1).Value = "ID";
             worksheet.Cell(1, 2).Value = "Ім'я";
             worksheet.Cell(1, 3).Value = "Прізвище";
             worksheet.Cell(1, 4).Value = "Посада";
-            worksheet.Cell(1, 5).Value = "Пошта";
+            worksheet.Cell(1, 5).Value = "Email";
             worksheet.Cell(1, 6).Value = "Телефон";
 
-            // Дані
             for (int i = 0; i < StaffList.Count; i++)
             {
                 var s = StaffList[i];
@@ -188,67 +212,68 @@ public class StaffViewModel : BaseViewModel, ILoadable
             workbook.SaveAs(dialog.FileName);
         }
     }
+
     private async Task ImportFromExcel()
     {
         var dialog = new OpenFileDialog
         {
             Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть Excel-файл з працівниками"
+            Title = "Виберіть файл Excel"
         };
 
         if (dialog.ShowDialog() == true)
         {
-            using var workbook = new XLWorkbook(dialog.FileName);
-            var worksheet = workbook.Worksheet(1);
-            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Пропускаємо заголовки
-
-            var existingStaff = await _staffService.GetAllStaffAsync();
-
-            int importedCount = 0;
-            int duplicateCount = 0;
-
-            foreach (var row in rows)
+            try
             {
-                var firstName = row.Cell(2).GetString().Trim();
-                var lastName = row.Cell(3).GetString().Trim();
-                var position = row.Cell(4).GetString().Trim();
-                var email = row.Cell(5).GetString().Trim();
-                var phone = row.Cell(6).GetString().Trim();
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheets.First();
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                bool exists = existingStaff.Any(s =>
-                    s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
-                    s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
-                    s.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
-                );
+                var existingStaff = await _staffService.GetAllStaffAsync();
 
-                if (!exists)
+                int imported = 0, duplicates = 0;
+
+                foreach (var row in rows)
                 {
-                    var staff = new Staff
+                    var firstName = row.Cell(1).GetString().Trim();
+                    var lastName = row.Cell(2).GetString().Trim();
+                    var position = row.Cell(3).GetString().Trim();
+                    var email = row.Cell(4).GetString().Trim();
+                    var phone = row.Cell(5).GetString().Trim();
+
+                    bool exists = existingStaff.Any(s =>
+                        s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                        s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                        s.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+                    if (!exists)
                     {
-                        FirstName = firstName,
-                        LastName = lastName,
-                        Position = position,
-                        Email = email,
-                        Phone = phone
-                    };
+                        var staff = new Staff
+                        {
+                            FirstName = firstName,
+                            LastName = lastName,
+                            Position = position,
+                            Email = email,
+                            Phone = phone
+                        };
 
-                    await _staffService.AddStaffAsync(staff);
-                    importedCount++;
+                        await _staffService.AddStaffAsync(staff);
+                        imported++;
+                    }
+                    else
+                    {
+                        duplicates++;
+                    }
                 }
-                else
-                {
-                    duplicateCount++;
-                }
+
+                await LoadDataAsync();
+
+                System.Windows.MessageBox.Show($"Імпорт завершено:\nДодано: {imported}\nПропущено: {duplicates}", "Результат імпорту");
             }
-
-            await LoadDataAsync();
-
-            System.Windows.MessageBox.Show(
-                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
-                "Результат імпорту",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Information
-            );
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+            }
         }
     }
 }

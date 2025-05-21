@@ -32,7 +32,7 @@ namespace CollegeInfoSystem
                 var studentViewModel = new StudentViewModel(studentService, groupService, CurrentUserRole);
                 var teacherViewModel = new TeacherViewModel(teacherService, CurrentUserRole);
                 var facultyViewModel = new FacultyViewModel(facultyService, CurrentUserRole);
-                var staffViewModel = new StaffViewModel(staffService);
+                var staffViewModel = new StaffViewModel(staffService, CurrentUserRole);
                 var scheduleViewModel = new ScheduleViewModel(scheduleService, groupService, teacherService, CurrentUserRole);
                 var groupViewModel = new GroupViewModel(groupService, facultyService, teacherService, studentService, CurrentUserRole);
 

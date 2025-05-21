@@ -1,30 +1,39 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.StaffView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
         <StackPanel>
 
-            <!-- 🔍 Панель фільтрів -->
+            <!-- 🔍 Пошук і фільтри -->
             <StackPanel Orientation="Horizontal" Margin="10">
-                <StackPanel Margin="5">
-                    <TextBlock Text="Прізвище"/>
-                    <TextBox Width="150" Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Margin="5">
-                    <TextBlock Text="Посада"/>
-                    <TextBox Width="150" Text="{Binding PositionFilter, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Margin="5" Padding="5,0"/>
-                <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="120" Margin="5"/>
-                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="120" Margin="5"/>
+                <TextBox Width="150" Margin="5"
+                         Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Пошук за прізвищем"/>
 
+                <TextBox Width="150" Margin="5"
+                         Text="{Binding PositionFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Фільтр за посадою"/>
+
+                <Button Content="Очистити фільтри" Command="{Binding ClearFiltersCommand}" Width="150" Margin="5"/>
+                <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="150" Margin="5"/>
+
+                <!-- Кнопка Імпорт з Excel (тільки для admin) -->
+                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
 
             <!-- 📋 Таблиця працівників -->
-            <ListView ItemsSource="{Binding StaffList}" SelectedItem="{Binding SelectedStaff}">
+            <ListView ItemsSource="{Binding StaffList}" SelectedItem="{Binding SelectedStaff}" Margin="10">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StaffID}" Width="50"/>
@@ -39,9 +48,47 @@
 
             <!-- 🔘 Кнопки керування -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button Content="Додати" Command="{Binding AddStaffCommand}" Width="100" Margin="5"/>
-                <Button Content="Оновити" Command="{Binding UpdateStaffCommand}" Width="100" Margin="5"/>
-                <Button Content="Видалити" Command="{Binding DeleteStaffCommand}" Width="100" Margin="5"/>
+                <!-- Додати (admin тільки) -->
+                <Button Content="Додати" Command="{Binding AddStaffCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Оновити (admin тільки) -->
+                <Button Content="Оновити" Command="{Binding UpdateStaffCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Видалити (admin тільки) -->
+                <Button Content="Видалити" Command="{Binding DeleteStaffCommand}" Width="100" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
         </StackPanel>
     </Grid>
