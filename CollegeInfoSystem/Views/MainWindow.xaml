@@ -1,28 +1,87 @@
 ﻿<Window x:Class="CollegeInfoSystem.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="College Information System" Height="600" Width="1000">
+        Title="College Information System"
+        Height="600" Width="1000"
+        MinWidth="800" MinHeight="500"
+        FontFamily="Segoe UI"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}">
 
-    <DockPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <Border Background="LightGray" Padding="10" DockPanel.Dock="Top">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                <TextBlock Text="Роль: " FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding UserRole}" Margin="5,0" VerticalAlignment="Center"/>
-                <Button Content="Вийти" Command="{Binding LogoutCommand}" HorizontalAlignment="Right" Margin="20,0,0,0"/>
-            </StackPanel>
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBackgroundBrush}" Padding="12">
+            <DockPanel VerticalAlignment="Center">
+                <!-- Role on the left -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Роль: "
+                               FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding UserRole}"
+                               Margin="6,0,0,0"
+                               FontSize="16"
+                               Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Exit and theme switcher on the right -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <ToggleButton x:Name="ThemeToggleButton"
+                                  Width="50" Height="30" Margin="0,0,12,0"
+                                  Checked="ThemeToggleButton_Checked"
+                                  Unchecked="ThemeToggleButton_Unchecked"
+                                  Style="{DynamicResource ThemeToggleStyle}"
+                                  ToolTip="Перемкнути тему"/>
+                    <Button Content="Вийти"
+                            Command="{Binding LogoutCommand}"
+                            Style="{DynamicResource HeaderButtonStyle}" Height="30" Width="90"/>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
-        <StackPanel DockPanel.Dock="Left" Width="130" Background="LightSteelBlue">
-            <Button Content="Студенти" Command="{Binding OpenStudentsViewCommand}" Margin="5" />
-            <Button Content="Викладачі" Command="{Binding OpenTeachersViewCommand}" Margin="5" />
-            <Button Content="Групи" Command="{Binding OpenGroupsViewCommand}" Margin="5" />
-            <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Margin="5" />
-            <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Margin="5" />
-            <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Margin="5" />
-            <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Margin="5" Visibility="Collapsed"/>
-        </StackPanel>
+        <!-- Main -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <ContentControl Content="{Binding CurrentView}" />
-    </DockPanel>
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarBackgroundBrush}" Padding="20">
+                <StackPanel VerticalAlignment="Stretch" Width="220">
+                    <TextBlock Text="НАВІГАЦІЯ"
+                               FontWeight="Bold"
+                               FontSize="20"
+                               Margin="0,0,0,25"
+                               Foreground="{DynamicResource PrimaryTextBrush}"/>
+
+                    <Button Content="Студенти" Command="{Binding OpenStudentsViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button Content="Викладачі" Command="{Binding OpenTeachersViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button Content="Групи" Command="{Binding OpenGroupsViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
+                    <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Visibility="Collapsed" Style="{DynamicResource NavButtonStyle}" Height="30" Margin="0,0,0,20"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Main Content -->
+            <Border Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}" Padding="32">
+                <ContentControl Content="{Binding CurrentView}" />
+            </Border>
+        </Grid>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Background="{DynamicResource HeaderBackgroundBrush}" Padding="5">
+            <TextBlock Text="© 2025 College Information System"
+                       HorizontalAlignment="Center"
+                       FontSize="12"
+                       Foreground="{DynamicResource SecondaryTextBrush}"/>
+        </Border>
+    </Grid>
 </Window>
