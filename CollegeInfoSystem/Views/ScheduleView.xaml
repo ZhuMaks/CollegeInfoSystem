@@ -1,35 +1,56 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.ScheduleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid>
-        <StackPanel>
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource WindowBackgroundBrush}">
 
-            <!-- Фільтри -->
-            <StackPanel Orientation="Horizontal" Margin="10">
-                <ComboBox Width="150" Margin="5"
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Фільтри -->
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0 0 0 20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 0 0 10">
+                <ComboBox Width="150" Margin="0 0 10 0"
+                          FontSize="16"
+                          Style="{StaticResource ComboBoxStyle}"
                           ItemsSource="{Binding Groups}"
                           DisplayMemberPath="GroupName"
                           SelectedItem="{Binding SelectedGroup}"
                           ToolTip="Фільтр за групою"/>
 
-                <ComboBox Width="150" Margin="5"
+                <ComboBox Width="200" Margin="0 0 10 0"
+                          FontSize="16"
+                          Style="{StaticResource ComboBoxStyle}"
                           ItemsSource="{Binding Teachers}"
                           DisplayMemberPath="FullName"
                           SelectedItem="{Binding SelectedTeacher}"
                           ToolTip="Фільтр за викладачем"/>
 
-                <ComboBox Width="150" Margin="5"
+                <ComboBox Width="150" Margin="0 0 10 0"
+                          FontSize="16"
+                          Style="{StaticResource ComboBoxStyle}"
                           ItemsSource="{Binding DaysOfWeek}"
                           SelectedItem="{Binding SelectedDay}"
                           ToolTip="Фільтр за днем тижня"/>
 
-                <Button Content="Скинути фільтри" Command="{Binding ClearFiltersCommand}" Width="130" Margin="5"/>
-                <Button Content="Звіт у Excel" Command="{Binding ExportToExcelCommand}" Width="120" Margin="5"/>
+                <Button Content="Скинути фільтри"
+                        Command="{Binding ClearFiltersCommand}"
+                        Style="{StaticResource MainButtonStyle}"
+                        Width="130" Height="30"/>
 
-                <!-- Кнопка Імпорт з Excel (тільки для admin) -->
-                <Button Content="Імпорт з Excel" Command="{Binding ImportFromExcelCommand}" Width="150" Margin="5">
+                <Button Content="Звіт у Excel"
+                        Command="{Binding ExportToExcelCommand}"
+                        Style="{StaticResource MainButtonStyle}"
+                        Width="120" Height="30" Margin="10,0,0,0"/>
+
+                <Button Content="Імпорт з Excel"
+                        Command="{Binding ImportFromExcelCommand}"
+                        Width="150" Height="30" Margin="10,0,0,0">
                     <Button.Style>
-                        <Style TargetType="Button">
+                        <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
@@ -40,87 +61,89 @@
                     </Button.Style>
                 </Button>
             </StackPanel>
+        </ScrollViewer>
 
-            <!-- Список розкладу -->
-            <ListView ItemsSource="{Binding Schedules}" SelectedItem="{Binding SelectedSchedule}" Margin="10">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ScheduleID}" Width="50"/>
-                        <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
-                        <GridViewColumn Header="Викладач" DisplayMemberBinding="{Binding Teacher.FullName}" Width="150"/>
-                        <GridViewColumn Header="Предмет" DisplayMemberBinding="{Binding Subject}" Width="150"/>
-                        <GridViewColumn Header="День" DisplayMemberBinding="{Binding DayOfWeek}" Width="100"/>
-                        <GridViewColumn Header="Час" Width="120">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock>
-                                        <Run Text="{Binding StartTime, StringFormat={}{0:hh\\:mm}}"/>
-                                        <Run Text=" - "/>
-                                        <Run Text="{Binding EndTime, StringFormat={}{0:hh\\:mm}}"/>
-                                    </TextBlock>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Header="Аудиторія" DisplayMemberBinding="{Binding Room}" Width="80"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+        <!-- Список розкладу -->
+        <ListView Grid.Row="1"
+                  ItemsSource="{Binding Schedules}"
+                  SelectedItem="{Binding SelectedSchedule}"
+                  Style="{StaticResource ListViewStyle}"
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Stretch"
+                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ScheduleID}" Width="50"/>
+                    <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
+                    <GridViewColumn Header="Викладач" DisplayMemberBinding="{Binding Teacher.FullName}" Width="150"/>
+                    <GridViewColumn Header="Предмет" DisplayMemberBinding="{Binding Subject}" Width="150"/>
+                    <GridViewColumn Header="День" DisplayMemberBinding="{Binding DayOfWeek}" Width="100"/>
+                    <GridViewColumn Header="Час" Width="120">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding StartTime, StringFormat={}{0:hh\\:mm}}"/>
+                                    <Run Text=" - "/>
+                                    <Run Text="{Binding EndTime, StringFormat={}{0:hh\\:mm}}"/>
+                                </TextBlock>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Аудиторія" DisplayMemberBinding="{Binding Room}" Width="80"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
 
-            <!-- Кнопки CRUD -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+        <!-- Кнопки CRUD -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20 0 0">
+            <Button Content="Додати" Command="{Binding AddScheduleCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
 
-                <!-- Додати (admin, teacher) -->
-                <Button Content="Додати" Command="{Binding AddScheduleCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+            <Button Content="Оновити" Command="{Binding UpdateScheduleCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
 
-                <!-- Оновити (admin, teacher) -->
-                <Button Content="Оновити" Command="{Binding UpdateScheduleCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
-                <!-- Видалити (admin, teacher) -->
-                <Button Content="Видалити" Command="{Binding DeleteScheduleCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
-            </StackPanel>
+            <Button Content="Видалити" Command="{Binding DeleteScheduleCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </StackPanel>
     </Grid>
 </UserControl>

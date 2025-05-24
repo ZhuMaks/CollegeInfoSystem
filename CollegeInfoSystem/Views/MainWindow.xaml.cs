@@ -27,14 +27,17 @@ namespace CollegeInfoSystem.Views
 
         private void ApplyTheme(ResourceDictionary theme)
         {
-            var existing = Resources.MergedDictionaries.FirstOrDefault(d =>
-                d.Source != null && d.Source.OriginalString.Contains("Theme"));
+            var appResources = Application.Current.Resources;
+
+            var existing = appResources.MergedDictionaries
+                .FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Theme"));
 
             if (existing != null)
-                Resources.MergedDictionaries.Remove(existing);
+                appResources.MergedDictionaries.Remove(existing);
 
-            Resources.MergedDictionaries.Add(theme);
+            appResources.MergedDictionaries.Add(theme);
         }
+
 
         private void ThemeToggleButton_Checked(object sender, RoutedEventArgs e)
         {

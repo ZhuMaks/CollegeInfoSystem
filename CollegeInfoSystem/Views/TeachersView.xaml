@@ -1,37 +1,41 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.TeachersView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d">
-    <Grid Margin="10">
-        <StackPanel>
+             Background="{DynamicResource WindowBackgroundBrush}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <!-- Поля фільтрації -->
-            <StackPanel Orientation="Horizontal" Margin="0 0 0 10" HorizontalAlignment="Left">
-                <TextBox Width="200"
-                         Margin="5"
-                         VerticalAlignment="Center"
-                         Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}" 
-                         ToolTip="Пошук за прізвищем" />
-                <CheckBox Content="Лише куратори"
+        <!-- Пошук і фільтрація -->
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0 0 0 20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 0 0 10">
+                <TextBox Width="200" Margin="0 0 10 0"
+                         FontSize="16"
+                         Style="{StaticResource TextBoxStyle}"
+                         Text="{Binding LastNameFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Пошук за прізвищем"/>
+
+                <CheckBox Content="Лише куратори" Margin="0 0 10 0"
+                          Style="{StaticResource ThemedCheckBoxStyle}"
                           VerticalAlignment="Center"
-                          IsChecked="{Binding IsCuratorOnly}" 
-                          Margin="5"/>
+                          IsChecked="{Binding IsCuratorOnly}"/>
+
                 <Button Content="Очистити фільтр"
                         Command="{Binding ClearFilterCommand}"
-                        Margin="5"
-                        VerticalAlignment="Center"/>
-                <Button Content="Звіт у Excel" 
-                        Command="{Binding ExportToExcelCommand}" 
-                        Width="150" Margin="5"/>
+                        Style="{StaticResource MainButtonStyle}" Width="160" Height="30"/>
 
-                <!-- Тільки для адміністратора -->
-                <Button Content="Імпортувати з Excel" 
-                        Command="{Binding ImportFromExcelCommand}" 
-                        Width="150" Margin="5">
+                <Button Content="Звіт у Excel"
+                        Command="{Binding ExportToExcelCommand}"
+                        Style="{StaticResource MainButtonStyle}" Width="160" Height="30" Margin="10,0,0,0"/>
+
+                <Button Content="Імпорт з Excel"
+                        Command="{Binding ImportFromExcelCommand}"
+                        Width="160" Height="30" Margin="10,0,0,0">
                     <Button.Style>
-                        <Style TargetType="Button">
+                        <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
@@ -42,62 +46,75 @@
                     </Button.Style>
                 </Button>
             </StackPanel>
+        </ScrollViewer>
 
-            <!-- Список викладачів -->
-            <ListView ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding TeacherID}" Width="50"/>
-                        <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="100"/>
-                        <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="100"/>
-                        <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="200"/>
-                        <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding IsCurator}" Width="70"/>
-                        <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="150"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+        <!-- Таблиця викладачів -->
+        <ListView Grid.Row="1"
+                  ItemsSource="{Binding Teachers}"
+                  SelectedItem="{Binding SelectedTeacher}"
+                  Style="{StaticResource ListViewStyle}"
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Stretch"
+                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding TeacherID}" Width="60"/>
+                    <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="120"/>
+                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="120"/>
+                    <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="180"/>
+                    <GridViewColumn Header="Куратор" Width="80">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsCurator}" IsEnabled="False" HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="140"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
 
-            <!-- Кнопки дій (видимі лише для admin) -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                <Button Content="Додати" Command="{Binding AddTeacherCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+        <!-- Кнопки CRUD -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 20 0 0">
+            <Button Content="Додати" Command="{Binding AddTeacherCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
 
-                <Button Content="Оновити" Command="{Binding UpdateTeacherCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+            <Button Content="Оновити" Command="{Binding UpdateTeacherCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
 
-                <Button Content="Видалити" Command="{Binding DeleteTeacherCommand}" Width="100" Margin="5">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </StackPanel>
+            <Button Content="Видалити" Command="{Binding DeleteTeacherCommand}" Width="140" Height="35" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -25,6 +25,21 @@
     <SolidColorBrush x:Key="ToggleSwitchBackgroundBrush" Color="{StaticResource ToggleSwitchBackground}" />
     <SolidColorBrush x:Key="ToggleSwitchThumbBrush" Color="{StaticResource ToggleSwitchThumb}" />
 
+    <SolidColorBrush x:Key="SelectedItemBackgroundBrush" Color="#D0E8FF"/>
+    <SolidColorBrush x:Key="SelectedItemForegroundBrush" Color="Black"/>
+    <SolidColorBrush x:Key="ItemMouseOverBackgroundBrush" Color="#E6F2FF"/>
+
+    <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="#EEEEEE"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#AAAAAA"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#888888"/>
+
+    <SolidColorBrush x:Key="CheckBoxForegroundLight" Color="#333333"/>
+    <SolidColorBrush x:Key="CheckBoxBackgroundLight" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="CheckBoxBorderLight" Color="#888888"/>
+    <SolidColorBrush x:Key="ForegroundBrush" Color="{StaticResource PrimaryTextColor}"/>
+
+
+
     <!-- Styles -->
     <Style x:Key="NavButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource ButtonBrush}"/>
@@ -35,12 +50,15 @@
         <Setter Property="Margin" Value="0,6"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border Background="{TemplateBinding Background}" CornerRadius="4">
-                        <ContentPresenter Margin="16,0" VerticalAlignment="Center"/>
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Margin="16,0"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -51,6 +69,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+    
 
     <Style x:Key="HeaderButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -74,5 +93,82 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="ThemedCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{DynamicResource CheckBoxForegroundLight}"/>
+        <Setter Property="Background" Value="{DynamicResource CheckBoxBackgroundLight}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CheckBoxBorderLight}"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="Margin" Value="0,0,10,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border x:Name="Border" Width="16" Height="16" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="1" 
+                            CornerRadius="2" 
+                            Margin="0,0,6,0"/>
+                        <ContentPresenter VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="Gray"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="Gray"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="DodgerBlue"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- PasswordBoxStyle -->
+    <Style x:Key="PasswordBoxStyle" TargetType="PasswordBox">
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SecondaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ListBoxStyle -->
+    <Style x:Key="ListBoxStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SecondaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        SnapsToDevicePixels="True">
+                        <ScrollViewer Padding="{TemplateBinding Padding}" Focusable="False">
+                            <ItemsPresenter/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource DisabledTextBrush}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>
