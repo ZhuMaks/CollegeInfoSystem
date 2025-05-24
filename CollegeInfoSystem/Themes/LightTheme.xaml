@@ -38,6 +38,16 @@
     <SolidColorBrush x:Key="CheckBoxBorderLight" Color="#888888"/>
     <SolidColorBrush x:Key="ForegroundBrush" Color="{StaticResource PrimaryTextColor}"/>
 
+    <SolidColorBrush x:Key="TextBrush" Color="Black"/>
+    <SolidColorBrush x:Key="LabelForegroundBrush" Color="Black" />
+    <SolidColorBrush x:Key="DatePickerBackgroundBrush" Color="White"/>
+    <SolidColorBrush x:Key="DatePickerBorderBrush" Color="#FFB0B0B0"/>
+    <SolidColorBrush x:Key="DatePickerForegroundBrush" Color="Black"/>
+    <SolidColorBrush x:Key="DatePickerPlaceholderBrush" Color="#FF707070"/>
+    <SolidColorBrush x:Key="DatePickerDisabledForegroundBrush" Color="#FFAAAAAA"/>
+
+
+
 
 
     <!-- Styles -->
@@ -171,4 +181,55 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+    <Style x:Key="LabelStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource LabelForegroundBrush}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="0,5,0,2" />
+    </Style>
+
+    <Style x:Key="DatePickerStyle" TargetType="DatePicker">
+        <Setter Property="Background" Value="{DynamicResource DatePickerBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource DatePickerForegroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DatePickerBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid>
+                        <DatePickerTextBox x:Name="PART_TextBox"
+                                       Background="{TemplateBinding Background}"
+                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                       BorderThickness="{TemplateBinding BorderThickness}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                       Padding="{TemplateBinding Padding}"/>
+                        <Button x:Name="PART_Button" 
+                            Focusable="False" 
+                            HorizontalAlignment="Right" 
+                            Width="30" 
+                            Margin="0"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            ToolTip="Відкрити календар">
+                            <Path Data="M7 10h2v2H7zM6 3h6v1H6zM4 6h10v1H4z" Fill="{TemplateBinding Foreground}" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_TextBox" Property="Foreground" Value="{DynamicResource DatePickerDisabledForegroundBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+
 </ResourceDictionary>

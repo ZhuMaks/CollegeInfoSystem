@@ -86,7 +86,6 @@ namespace CollegeInfoSystem.ViewModels
             }
 
             LogoutCommand = new RelayCommand(Logout);
-            CurrentView = _studentsView;
         }
 
         private void Logout()

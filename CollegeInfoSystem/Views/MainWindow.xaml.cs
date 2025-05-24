@@ -36,7 +36,13 @@ namespace CollegeInfoSystem.Views
                 appResources.MergedDictionaries.Remove(existing);
 
             appResources.MergedDictionaries.Add(theme);
+
+            if (theme == lightTheme)
+                App.CurrentTheme = "light";
+            else if (theme == darkTheme)
+                App.CurrentTheme = "dark";
         }
+
 
 
         private void ThemeToggleButton_Checked(object sender, RoutedEventArgs e)
@@ -48,5 +54,7 @@ namespace CollegeInfoSystem.Views
         {
             ApplyTheme(lightTheme);
         }
+
+
     }
 }

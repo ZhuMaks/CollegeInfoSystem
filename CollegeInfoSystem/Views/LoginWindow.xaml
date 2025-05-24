@@ -3,27 +3,66 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:CollegeInfoSystem.ViewModels"
         mc:Ignorable="d"
-        Title="Login" Height="250" Width="400" WindowStartupLocation="CenterScreen">
+        Title="Вхід у систему"
+        MinWidth="480" MinHeight="380"
+        Width="650" Height="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        FontFamily="Segoe UI"
+        FontSize="20">
 
-    <Grid Margin="20">
+    <Grid Margin="40" VerticalAlignment="Center" HorizontalAlignment="Center">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Username:" Grid.Row="0"/>
-        <TextBox Grid.Row="0" Margin="100,0,0,5" Width="200" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
+        <!-- Заголовок -->
+        <TextBlock Text="Авторизація" 
+                   FontSize="30" 
+                   FontWeight="Bold" 
+                   Foreground="{DynamicResource ForegroundBrush}" 
+                   HorizontalAlignment="Center" Margin="0 0 0 20" Grid.Row="0"/>
 
-        <TextBlock Text="Password:" Grid.Row="1" Margin="0,10,0,0"/>
-        <PasswordBox Grid.Row="1" Margin="100,10,0,0" Width="200" PasswordChanged="PasswordBox_PasswordChanged"/>
+        <!-- Username -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" VerticalAlignment="Center" Margin="0 10">
+            <TextBlock Text="Ім'я користувача:" Width="180" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+            <TextBox Width="220" Height="40"
+         Style="{StaticResource TextBoxStyle}"
+         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+         VerticalContentAlignment="Center"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-            <Button Content="Login" Command="{Binding LoginCommand}" Width="100" Margin="10"/>
         </StackPanel>
-        <TextBlock Grid.Row="3" Text="{Binding ErrorMessage}" Foreground="Red" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+
+        <!-- Password -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" VerticalAlignment="Center" Margin="0 5">
+            <TextBlock Text="Пароль:" Width="180" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+            <PasswordBox Width="220" Height="40"
+             Style="{StaticResource PasswordBoxStyle}"
+             PasswordChanged="PasswordBox_PasswordChanged"
+             VerticalContentAlignment="Center"/>
+
+        </StackPanel>
+
+        <!-- Кнопка Вхід -->
+        <StackPanel Grid.Row="3" HorizontalAlignment="Center" Margin="0 30 0 0">
+            <Button Content="Увійти" 
+                    Command="{Binding LoginCommand}"
+                    Style="{StaticResource MainButtonStyle}" 
+                    Width="200" Height="45" FontSize="20"/>
+        </StackPanel>
+
+        <!-- Повідомлення про помилку -->
+        <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" 
+                   Foreground="Tomato" 
+                   FontWeight="SemiBold"
+                   HorizontalAlignment="Center" Margin="0 10 0 0"
+                   TextWrapping="Wrap"
+                   MaxWidth="380"/>
     </Grid>
 </Window>

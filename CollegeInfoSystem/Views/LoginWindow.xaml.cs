@@ -9,6 +9,7 @@ namespace CollegeInfoSystem.Views
         public LoginWindow()
         {
             InitializeComponent();
+            ApplyTheme(App.CurrentTheme);
             if (DataContext is LoginViewModel vm)
             {
                 vm.LoginSucceeded += OnLoginSucceeded;
@@ -29,5 +30,18 @@ namespace CollegeInfoSystem.Views
                 vm.Password = passwordBox.Password;
             }
         }
+        private void ApplyTheme(string themeName)
+        {
+            var dict = new ResourceDictionary();
+
+            if (themeName == "dark")
+                dict.Source = new Uri("/CollegeInfoSystem;component/Themes/DarkTheme.xaml", UriKind.RelativeOrAbsolute);
+            else
+                dict.Source = new Uri("/CollegeInfoSystem;component/Themes/LightTheme.xaml", UriKind.RelativeOrAbsolute);
+
+            this.Resources.MergedDictionaries.Clear();
+            this.Resources.MergedDictionaries.Add(dict);
+        }
+
     }
 }

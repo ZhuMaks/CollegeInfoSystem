@@ -8,6 +8,7 @@ namespace CollegeInfoSystem
     public partial class App : Application
     {
         public static string CurrentUserRole { get; set; } = string.Empty;
+        public static string CurrentTheme { get; set; } = "light";
 
         protected override void OnStartup(StartupEventArgs e)
         {
