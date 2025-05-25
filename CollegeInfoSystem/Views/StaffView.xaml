@@ -64,7 +64,7 @@
                 <GridView>
                     <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StaffID}" Width="60"/>
                     <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="140"/>
-                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="140"/>
+                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="180"/>
                     <GridViewColumn Header="Посада" DisplayMemberBinding="{Binding Position}" Width="180"/>
                     <GridViewColumn Header="Пошта" DisplayMemberBinding="{Binding Email}" Width="200"/>
                     <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="160"/>

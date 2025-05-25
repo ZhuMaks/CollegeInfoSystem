@@ -16,72 +16,72 @@
             <!-- Список студентів в групі -->
         </Grid.RowDefinitions>
 
-        <!-- Фільтри і кнопки звітів/імпорту -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 0 0 20">
-            <TextBox Width="150" Margin="0 0 10 0"
-                     FontSize="16"
-                     Style="{StaticResource TextBoxStyle}"
-                     Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Пошук за назвою групи"/>
+        <!-- Фільтри і кнопки звітів/імпорту зі ScrollViewer -->
+        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0 0 0 20">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0 0 0 10">
+                <TextBox Width="150" Margin="0 0 10 0"
+                         FontSize="16"
+                         Style="{StaticResource TextBoxStyle}"
+                         Text="{Binding GroupNameFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Пошук за назвою групи"/>
 
-            <ComboBox Width="150" Margin="0 0 10 0"
-                      FontSize="16"
-                      Style="{StaticResource ComboBoxStyle}"
-                      ItemsSource="{Binding Faculties}"
-                      DisplayMemberPath="FacultyName"
-                      SelectedItem="{Binding SelectedFaculty}"
-                      ToolTip="Виберіть факультет"/>
+                <ComboBox Width="150" Margin="0 0 10 0"
+                          FontSize="16"
+                          Style="{StaticResource ComboBoxStyle}"
+                          ItemsSource="{Binding Faculties}"
+                          DisplayMemberPath="FacultyName"
+                          SelectedItem="{Binding SelectedFaculty}"
+                          ToolTip="Виберіть факультет"/>
 
-            <ComboBox Width="200" Margin="0 0 10 0"
-                      FontSize="16"
-                      Style="{StaticResource ComboBoxStyle}"
-                      ItemsSource="{Binding Curators}"
-                      DisplayMemberPath="FullName"
-                      SelectedItem="{Binding SelectedCurator}"
-                      ToolTip="Виберіть куратора"/>
+                <ComboBox Width="200" Margin="0 0 10 0"
+                          FontSize="16"
+                          Style="{StaticResource ComboBoxStyle}"
+                          ItemsSource="{Binding Curators}"
+                          DisplayMemberPath="FullName"
+                          SelectedItem="{Binding SelectedCurator}"
+                          ToolTip="Виберіть куратора"/>
 
-            <Button Content="Очистити фільтр"
-                    Command="{Binding ClearFiltersCommand}"
-                    Style="{StaticResource MainButtonStyle}" Width="160" Height="30" Margin="0 0 10 0"/>
+                <Button Content="Очистити фільтр"
+                        Command="{Binding ClearFiltersCommand}"
+                        Style="{StaticResource MainButtonStyle}" Width="160" Height="30" Margin="0 0 10 0"/>
 
-            <Button Content="Звіт у Excel"
-                    Command="{Binding ExportToExcelCommand}"
-                    Style="{StaticResource MainButtonStyle}" Width="160" Height="30" Margin="0 0 10 0"/>
+                <Button Content="Звіт у Excel"
+                        Command="{Binding ExportToExcelCommand}"
+                        Style="{StaticResource MainButtonStyle}" Width="160" Height="30" Margin="0 0 10 0"/>
 
-            <Button Content="Імпорт з Excel"
-                    Command="{Binding ImportFromExcelCommand}" Width="160" Height="30">
-                <Button.Style>
-                    <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-        </StackPanel>
+                <Button Content="Імпорт з Excel"
+                        Command="{Binding ImportFromExcelCommand}" Width="160" Height="30">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource MainButtonStyle}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
 
-        <!-- Список груп -->
-        <ListView Grid.Row="1"
-                  ItemsSource="{Binding Groups}"
-                  SelectedItem="{Binding SelectedGroup}"
-                  Style="{StaticResource ListViewStyle}"
-                  HorizontalContentAlignment="Stretch"
-                  VerticalContentAlignment="Stretch"
-                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  Margin="0 0 0 20">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding GroupID}" Width="70"/>
-                    <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="180"/>
-                    <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding Faculty.FacultyName}" Width="180"/>
-                    <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding Curator.FullName}" Width="180"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
+        <!-- Список груп з ScrollViewer -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0 0 0 20">
+            <ListView ItemsSource="{Binding Groups}"
+                      SelectedItem="{Binding SelectedGroup}"
+                      Style="{StaticResource ListViewStyle}"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Stretch">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding GroupID}" Width="70"/>
+                        <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="180"/>
+                        <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding Faculty.FacultyName}" Width="180"/>
+                        <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding Curator.FullName}" Width="180"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </ScrollViewer>
 
         <!-- Кнопки CRUD -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 20">
@@ -135,19 +135,23 @@
         </StackPanel>
 
         <!-- Підпис -->
-        <TextBlock Grid.Row="3" Text="Студенти в групі" FontWeight="Bold" Margin="10,0,0,10"/>
+        <TextBlock Grid.Row="3" Text="Студенти в групі" FontWeight="Bold" Margin="10,0,0,10"
+           Foreground="{DynamicResource PrimaryTextBrush}"/>
 
-        <!-- Список студентів у групі -->
-        <ListView Grid.Row="4" ItemsSource="{Binding StudentsInGroup}" Margin="0,0,0,10"
-                  Style="{StaticResource ListViewStyle}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="70"/>
-                    <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="150"/>
-                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="150"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
+
+        <!-- Список студентів у групі з ScrollViewer -->
+        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0 0 0 10">
+            <ListView ItemsSource="{Binding StudentsInGroup}"
+                      Style="{StaticResource ListViewStyle}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="70"/>
+                        <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="150"/>
+                        <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="150"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </ScrollViewer>
 
     </Grid>
 </UserControl>

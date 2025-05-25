@@ -50,18 +50,20 @@
 
         <!-- Таблиця викладачів -->
         <ListView Grid.Row="1"
-                  ItemsSource="{Binding Teachers}"
-                  SelectedItem="{Binding SelectedTeacher}"
-                  Style="{StaticResource ListViewStyle}"
-                  HorizontalContentAlignment="Stretch"
-                  VerticalContentAlignment="Stretch"
-                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+          ItemsSource="{Binding Teachers}"
+          SelectedItem="{Binding SelectedTeacher}"
+          Style="{StaticResource ListViewStyle}"
+                  SelectionMode="Extended"
+          HorizontalContentAlignment="Stretch"
+          VerticalContentAlignment="Stretch"
+          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+          ScrollViewer.VerticalScrollBarVisibility="Auto">
+
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="ID" DisplayMemberBinding="{Binding TeacherID}" Width="60"/>
                     <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="120"/>
-                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="120"/>
+                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="180"/>
                     <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="180"/>
                     <GridViewColumn Header="Куратор" Width="80">
                         <GridViewColumn.CellTemplate>
@@ -70,7 +72,7 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="140"/>
+                    <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="150"/>
                 </GridView>
             </ListView.View>
         </ListView>

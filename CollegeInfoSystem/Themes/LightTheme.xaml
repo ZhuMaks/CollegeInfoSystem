@@ -25,10 +25,6 @@
     <SolidColorBrush x:Key="ToggleSwitchBackgroundBrush" Color="{StaticResource ToggleSwitchBackground}" />
     <SolidColorBrush x:Key="ToggleSwitchThumbBrush" Color="{StaticResource ToggleSwitchThumb}" />
 
-    <SolidColorBrush x:Key="SelectedItemBackgroundBrush" Color="#D0E8FF"/>
-    <SolidColorBrush x:Key="SelectedItemForegroundBrush" Color="Black"/>
-    <SolidColorBrush x:Key="ItemMouseOverBackgroundBrush" Color="#E6F2FF"/>
-
     <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="#EEEEEE"/>
     <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#AAAAAA"/>
     <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#888888"/>
@@ -45,6 +41,11 @@
     <SolidColorBrush x:Key="DatePickerForegroundBrush" Color="Black"/>
     <SolidColorBrush x:Key="DatePickerPlaceholderBrush" Color="#FF707070"/>
     <SolidColorBrush x:Key="DatePickerDisabledForegroundBrush" Color="#FFAAAAAA"/>
+
+    <SolidColorBrush x:Key="SelectedItemBackgroundBrush" Color="#D6EBFF"/>
+    <SolidColorBrush x:Key="SelectedItemForegroundBrush" Color="#1E1E1E"/>
+    <SolidColorBrush x:Key="SelectedItemBorderBrush" Color="#007ACC"/>
+    <SolidColorBrush x:Key="ItemMouseOverBackgroundBrush" Color="#F0F0F0"/>
 
 
 
@@ -230,6 +231,189 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
+    <Style TargetType="ListViewItem">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{x:Null}"
+                        CornerRadius="6"
+                        SnapsToDevicePixels="True"
+                        Padding="{TemplateBinding Padding}">
+                        <GridViewRowPresenter 
+                        Content="{TemplateBinding Content}" 
+                        Columns="{TemplateBinding GridView.ColumnCollection}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectedItemBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource SelectedItemForegroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ItemMouseOverBackgroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="Gray" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SecondaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="6"/>
+        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Name="ToggleButton"
+              Background="{TemplateBinding Background}"
+              BorderBrush="{TemplateBinding BorderBrush}"
+              BorderThickness="{TemplateBinding BorderThickness}"
+              Foreground="{TemplateBinding Foreground}"
+              IsChecked="{Binding Path=IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+              ClickMode="Press">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="20" />
+                                    <!-- ширина для іконки -->
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter Grid.Column="0"
+                          Margin="4,2,4,2"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          RecognizesAccessKey="True"
+                          Content="{TemplateBinding SelectionBoxItem}"
+                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+
+                                <Path Grid.Column="1"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Fill="{TemplateBinding Foreground}"
+              Data="M 0 0 L 4 4 L 8 0 Z"/>
+                            </Grid>
+                        </ToggleButton>
+                        <Popup Name="Popup"
+                           Placement="Bottom"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           PopupAnimation="Slide">
+                            <Grid Name="DropDown"
+                              SnapsToDevicePixels="True"
+                              MinWidth="{TemplateBinding ActualWidth}"
+                              MaxHeight="200"
+                              Background="{DynamicResource WindowBackgroundBrush}">
+                                <Border x:Name="DropDownBorder"
+                                    Background="{DynamicResource WindowBackgroundBrush}"
+                                    BorderBrush="{DynamicResource SecondaryTextBrush}"
+                                    BorderThickness="1"/>
+                                <ScrollViewer Margin="4,6,4,6"
+                                          SnapsToDevicePixels="True">
+                                    <StackPanel IsItemsHost="True"
+                                            KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                </ScrollViewer>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Приховані кнопки RepeatButton -->
+    <Style x:Key="ScrollBarRepeatButtonStyle" TargetType="RepeatButton">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Rectangle Fill="Transparent" Height="0" Width="0"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Thumb стиль для горизонтального скролбару -->
+    <Style x:Key="ScrollBarThumbStyleHorizontal" TargetType="Thumb">
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="MinWidth" Value="20"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{DynamicResource ScrollBarThumbBrush}" CornerRadius="4"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Thumb стиль для вертикального скролбару -->
+    <Style x:Key="ScrollBarThumbStyleVertical" TargetType="Thumb">
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="MinHeight" Value="20"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{DynamicResource ScrollBarThumbBrush}" CornerRadius="4"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Стиль ScrollBar -->
+    <Style TargetType="ScrollBar">
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid Background="Transparent" SnapsToDevicePixels="True">
+                        <Track Name="PART_Track" IsDirectionReversed="True" Focusable="False" IsEnabled="{TemplateBinding IsEnabled}">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ScrollBarRepeatButtonStyle}" Command="ScrollBar.PageUpCommand" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb 
+                                Style="{StaticResource ScrollBarThumbStyleVertical}" 
+                                x:Name="Thumb" />
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource ScrollBarRepeatButtonStyle}" Command="ScrollBar.PageDownCommand" />
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="Thumb" Property="Style" Value="{StaticResource ScrollBarThumbStyleHorizontal}"/>
+                            <Setter Property="Width" Value="Auto"/>
+                            <Setter Property="Height" Value="8"/>
+                        </Trigger>
+                        <Trigger Property="Orientation" Value="Vertical">
+                            <Setter TargetName="Thumb" Property="Style" Value="{StaticResource ScrollBarThumbStyleVertical}"/>
+                            <Setter Property="Width" Value="8"/>
+                            <Setter Property="Height" Value="Auto"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 
 </ResourceDictionary>
