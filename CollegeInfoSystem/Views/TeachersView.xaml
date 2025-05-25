@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.TeachersView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CollegeInfoSystem.Helpers"
              Background="{DynamicResource WindowBackgroundBrush}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -51,9 +52,10 @@
         <!-- Таблиця викладачів -->
         <ListView Grid.Row="1"
           ItemsSource="{Binding Teachers}"
-          SelectedItem="{Binding SelectedTeacher}"
+          SelectedItem="{Binding SelectedTeacher, Mode=TwoWay}"
+          local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedTeachers, Mode=TwoWay}"
           Style="{StaticResource ListViewStyle}"
-                  SelectionMode="Extended"
+          SelectionMode="Extended"
           HorizontalContentAlignment="Stretch"
           VerticalContentAlignment="Stretch"
           ScrollViewer.HorizontalScrollBarVisibility="Auto"

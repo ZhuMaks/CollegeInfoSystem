@@ -22,7 +22,7 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     public ObservableCollection<Group> Groups { get; set; } = new();
     public ObservableCollection<Student> StudentsInGroup { get; set; } = new();
-
+    public ObservableCollection<Group> SelectedGroups { get; set; } = new();
     public ObservableCollection<Faculty> Faculties { get; set; } = new();
     private Faculty _selectedFaculty;
     public Faculty SelectedFaculty
@@ -186,7 +186,11 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     private bool CanExecuteAddGroup() => CurrentUserRole == "admin";
     private bool CanExecuteUpdateGroup() => SelectedGroup != null && CurrentUserRole == "admin";
-    private bool CanExecuteDeleteGroup() => SelectedGroup != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteGroup()
+    {
+        return CurrentUserRole == "admin" &&
+               (SelectedGroup != null || (SelectedGroups != null && SelectedGroups.Any()));
+    }
     private bool CanExecuteExport() => true;
     private bool CanExecuteImport() => CurrentUserRole == "admin";
 
@@ -211,12 +215,21 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteGroupAsync()
     {
-        if (SelectedGroup != null)
+        if (SelectedGroups != null && SelectedGroups.Any())
+        {
+            foreach (var group in SelectedGroups.ToList())
+            {
+                await _groupService.DeleteGroupAsync(group.GroupID);
+            }
+        }
+        else if (SelectedGroup != null)
         {
             await _groupService.DeleteGroupAsync(SelectedGroup.GroupID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenGroupDialog(Group group)
     {

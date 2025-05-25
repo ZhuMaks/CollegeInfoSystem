@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.StaffView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CollegeInfoSystem.Helpers"
              Background="{DynamicResource WindowBackgroundBrush}">
 
     <Grid Margin="20">
@@ -53,8 +54,9 @@
         <!-- Таблиця працівників -->
         <ListView Grid.Row="1"
                   ItemsSource="{Binding StaffList}"
-                  SelectedItem="{Binding SelectedStaff}"
+                  SelectedItem="{Binding SelectedStaff, Mode=TwoWay}"
                   Style="{StaticResource ListViewStyle}"
+                  local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedStaffMembers, Mode=TwoWay}"
                   HorizontalContentAlignment="Stretch"
                   VerticalContentAlignment="Stretch"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"

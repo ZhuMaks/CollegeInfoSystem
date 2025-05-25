@@ -20,6 +20,7 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     private readonly TeacherService _teacherService;
 
     public ObservableCollection<Schedule> Schedules { get; set; } = new();
+    public ObservableCollection<Schedule> SelectedSchedules { get; set; } = new();
     private List<Schedule> _allSchedules = new();
 
     public ObservableCollection<string> DaysOfWeek { get; } = new(new[] { "", "Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя" });
@@ -167,7 +168,8 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
     private bool CanExecuteAdd() => CurrentUserRole is "admin";
     private bool CanExecuteUpdate() => SelectedSchedule != null && CurrentUserRole is "admin";
-    private bool CanExecuteDelete() => SelectedSchedule != null && CurrentUserRole is "admin";
+    private bool CanExecuteDelete() =>
+        (SelectedSchedule != null || SelectedSchedules.Any()) && CurrentUserRole is "admin";
     private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddSchedule()
@@ -191,12 +193,22 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteScheduleAsync()
     {
-        if (SelectedSchedule != null)
+        if (SelectedSchedules.Any())
+        {
+            foreach (var schedule in SelectedSchedules.ToList())
+            {
+                await _scheduleService.DeleteScheduleAsync(schedule.ScheduleID);
+            }
+            SelectedSchedules.Clear();
+        }
+        else if (SelectedSchedule != null)
         {
             await _scheduleService.DeleteScheduleAsync(SelectedSchedule.ScheduleID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenScheduleDialog(Schedule schedule)
     {

@@ -16,6 +16,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
     private readonly FacultyService _facultyService;
 
     public ObservableCollection<Faculty> Faculties { get; set; } = new();
+    public ObservableCollection<Faculty> SelectedFaculties { get; set; } = new();
 
     private Faculty _selectedFaculty;
     public Faculty SelectedFaculty
@@ -72,7 +73,10 @@ public class FacultyViewModel : BaseViewModel, ILoadable
 
     private bool CanExecuteAddFaculty() => CurrentUserRole == "admin";
     private bool CanExecuteUpdateFaculty() => SelectedFaculty != null && CurrentUserRole == "admin";
-    private bool CanExecuteDeleteFaculty() => SelectedFaculty != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteFaculty()
+    {
+        return (SelectedFaculty != null || SelectedFaculties.Any()) && CurrentUserRole == "admin";
+    }
     private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     public async Task LoadDataAsync()
@@ -106,12 +110,20 @@ public class FacultyViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteFacultyAsync()
     {
-        if (SelectedFaculty != null)
+        if (SelectedFaculties?.Count > 1)
+        {
+            var idsToDelete = SelectedFaculties.Select(f => f.FacultyID).ToList();
+            foreach (var id in idsToDelete)
+                await _facultyService.DeleteFacultyAsync(id);
+        }
+        else if (SelectedFaculty != null)
         {
             await _facultyService.DeleteFacultyAsync(SelectedFaculty.FacultyID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenFacultyDialog(Faculty faculty)
     {

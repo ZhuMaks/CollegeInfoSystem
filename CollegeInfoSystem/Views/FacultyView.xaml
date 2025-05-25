@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.FacultyView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CollegeInfoSystem.Helpers"
              Background="{DynamicResource WindowBackgroundBrush}">
 
     <Grid Margin="20">
@@ -12,8 +13,9 @@
         <!-- Список факультетів -->
         <ListView Grid.Row="0"
                   ItemsSource="{Binding Faculties}"
-                  SelectedItem="{Binding SelectedFaculty}"
+                  SelectedItem="{Binding SelectedFaculty, Mode=TwoWay}"
                   Style="{StaticResource ListViewStyle}"
+                  local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedFaculties, Mode=TwoWay}"
                   HorizontalContentAlignment="Stretch"
                   VerticalContentAlignment="Stretch"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"

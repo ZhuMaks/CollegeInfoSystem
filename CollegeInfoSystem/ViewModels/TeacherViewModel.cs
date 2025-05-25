@@ -16,6 +16,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
     private readonly TeacherService _teacherService;
 
     public ObservableCollection<Teacher> Teachers { get; set; } = new();
+    public ObservableCollection<Teacher> SelectedTeachers { get; set; } = new();
     private ObservableCollection<Teacher> _allTeachers = new();
 
     private Teacher _selectedTeacher;
@@ -135,7 +136,9 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
     private bool CanExecuteAddTeacher() => CurrentUserRole == "admin";
     private bool CanExecuteUpdateTeacher() => SelectedTeacher != null && CurrentUserRole == "admin";
-    private bool CanExecuteDeleteTeacher() => SelectedTeacher != null && CurrentUserRole == "admin";
+    private bool CanExecuteDeleteTeacher() =>
+        (SelectedTeacher != null || SelectedTeachers.Count > 1) &&
+        CurrentUserRole is "admin" or "teacher";
     private bool CanExecuteExport() => CurrentUserRole is "admin" or "teacher" or "guest";
     private bool CanExecuteImport() => CurrentUserRole == "admin";
 
@@ -160,12 +163,20 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteTeacherAsync()
     {
-        if (SelectedTeacher != null)
+        if (SelectedTeachers?.Count > 1)
+        {
+            var idsToDelete = SelectedTeachers.Select(t => t.TeacherID).ToList();
+            foreach (var id in idsToDelete)
+                await _teacherService.DeleteTeacherAsync(id);
+        }
+        else if (SelectedTeacher != null)
         {
             await _teacherService.DeleteTeacherAsync(SelectedTeacher.TeacherID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenTeacherDialog(Teacher teacher)
     {

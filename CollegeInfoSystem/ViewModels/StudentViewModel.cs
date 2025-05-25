@@ -21,6 +21,8 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public ObservableCollection<Student> Students { get; set; } = new();
     private List<Student> _allStudents = new();
     public ObservableCollection<Group> Groups { get; set; } = new();
+    public ObservableCollection<Student> SelectedStudents { get; set; } = new();
+
 
     private Student _selectedStudent;
     public Student SelectedStudent
@@ -78,6 +80,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public RelayCommand ClearFiltersCommand { get; }
     public RelayCommand ExportToExcelCommand { get; }
     public RelayCommand ImportFromExcelCommand { get; }
+
 
     public StudentViewModel(StudentService studentService, GroupService groupService, string currentUserRole)
     {
@@ -171,12 +174,20 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteStudentAsync()
     {
-        if (SelectedStudent != null)
+        if (SelectedStudents?.Count > 1)
+        {
+            var idsToDelete = SelectedStudents.Select(s => s.StudentID).ToList();
+            foreach (var id in idsToDelete)
+                await _studentService.DeleteStudentAsync(id);
+        }
+        else if (SelectedStudent != null)
         {
             await _studentService.DeleteStudentAsync(SelectedStudent.StudentID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenStudentDialog(Student student)
     {

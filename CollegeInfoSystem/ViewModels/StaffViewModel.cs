@@ -16,6 +16,7 @@ public class StaffViewModel : BaseViewModel, ILoadable
     private List<Staff> _allStaff;
 
     public ObservableCollection<Staff> StaffList { get; set; } = new();
+    public ObservableCollection<Staff> SelectedStaffMembers { get; set; } = new();
 
     private Staff _selectedStaff;
     public Staff SelectedStaff
@@ -129,8 +130,10 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
     private bool CanExecuteAddOrEdit() => CurrentUserRole == "admin";
     private bool CanExecuteEdit() => SelectedStaff != null && CurrentUserRole == "admin";
-    private bool CanExecuteDelete() => SelectedStaff != null && CurrentUserRole == "admin";
-    private bool CanExecuteExport() => true; // всім доступно
+    private bool CanExecuteDelete() =>
+        (SelectedStaff != null || (SelectedStaffMembers?.Count ?? 0) > 0)
+        && CurrentUserRole == "admin";
+    private bool CanExecuteExport() => true; 
     private bool CanExecuteImport() => CurrentUserRole == "admin";
 
     private async void AddStaff()
@@ -154,12 +157,22 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
     private async Task DeleteStaffAsync()
     {
-        if (SelectedStaff != null)
+        if (SelectedStaffMembers?.Count > 1)
+        {
+            var idsToDelete = SelectedStaffMembers.Select(s => s.StaffID).ToList();
+            foreach (var id in idsToDelete)
+            {
+                await _staffService.DeleteStaffAsync(id);
+            }
+        }
+        else if (SelectedStaff != null)
         {
             await _staffService.DeleteStaffAsync(SelectedStaff.StaffID);
-            await LoadDataAsync();
         }
+
+        await LoadDataAsync();
     }
+
 
     private bool OpenStaffDialog(Staff staff)
     {

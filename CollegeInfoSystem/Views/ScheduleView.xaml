@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="CollegeInfoSystem.Views.ScheduleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CollegeInfoSystem.Helpers"
              Background="{DynamicResource WindowBackgroundBrush}">
 
     <Grid Margin="20">
@@ -66,8 +67,9 @@
         <!-- Список розкладу -->
         <ListView Grid.Row="1"
                   ItemsSource="{Binding Schedules}"
-                  SelectedItem="{Binding SelectedSchedule}"
+                  SelectedItem="{Binding SelectedSchedule, Mode=TwoWay}"
                   Style="{StaticResource ListViewStyle}"
+                  local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedSchedules, Mode=TwoWay}"
                   HorizontalContentAlignment="Stretch"
                   VerticalContentAlignment="Stretch"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
