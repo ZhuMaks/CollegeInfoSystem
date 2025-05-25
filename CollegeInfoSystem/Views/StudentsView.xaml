@@ -69,10 +69,10 @@
                     <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="120"/>
                     <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="180"/>
                     <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="160"/>
-                    <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
                     <GridViewColumn Header="Телефон" DisplayMemberBinding="{Binding Phone}" Width="120"/>
                     <GridViewColumn Header="Дата народження" DisplayMemberBinding="{Binding DateOfBirth, StringFormat=d}" Width="130"/>
                     <GridViewColumn Header="Адреса" DisplayMemberBinding="{Binding Address}" Width="180"/>
+                    <GridViewColumn Header="Група" DisplayMemberBinding="{Binding Group.GroupName}" Width="100"/>
                 </GridView>
             </ListView.View>
         </ListView>

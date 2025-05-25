@@ -67,23 +67,23 @@
         </ScrollViewer>
 
         <!-- Список груп з ScrollViewer -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0 0 0 20">
-            <ListView ItemsSource="{Binding Groups}"
-                      SelectedItem="{Binding SelectedGroup, Mode=TwoWay}"
-                      Style="{StaticResource ListViewStyle}"
-                      local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedGroups, Mode=TwoWay}"
-                      HorizontalContentAlignment="Stretch"
-                      VerticalContentAlignment="Stretch">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding GroupID}" Width="70"/>
-                        <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="180"/>
-                        <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding Faculty.FacultyName}" Width="180"/>
-                        <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding Curator.FullName}" Width="180"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </ScrollViewer>
+        <ListView Grid.Row="1"
+          ItemsSource="{Binding Groups}"
+          SelectedItem="{Binding SelectedGroup, Mode=TwoWay}"
+          Style="{StaticResource ListViewStyle}"
+          local:ListViewSelectedItemsBehavior.BindableSelectedItems="{Binding SelectedGroups, Mode=TwoWay}"
+          HorizontalContentAlignment="Stretch"
+          VerticalContentAlignment="Stretch"
+          Margin="0 0 0 20">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding GroupID}" Width="70"/>
+                    <GridViewColumn Header="Назва" DisplayMemberBinding="{Binding GroupName}" Width="180"/>
+                    <GridViewColumn Header="Факультет" DisplayMemberBinding="{Binding Faculty.FacultyName}" Width="180"/>
+                    <GridViewColumn Header="Куратор" DisplayMemberBinding="{Binding Curator.FullName}" Width="180"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
 
         <!-- Кнопки CRUD -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0 0 0 20">
@@ -142,18 +142,20 @@
 
 
         <!-- Список студентів у групі з ScrollViewer -->
-        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0 0 0 10">
-            <ListView ItemsSource="{Binding StudentsInGroup}"
-                      Style="{StaticResource ListViewStyle}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="70"/>
-                        <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="150"/>
-                        <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="150"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </ScrollViewer>
+        <ListView Grid.Row="4"
+          ItemsSource="{Binding StudentsInGroup}"
+          Style="{StaticResource ListViewStyle}"
+          HorizontalContentAlignment="Stretch"
+          VerticalContentAlignment="Stretch"
+          Margin="0 0 0 10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="70"/>
+                    <GridViewColumn Header="Ім'я" DisplayMemberBinding="{Binding FirstName}" Width="150"/>
+                    <GridViewColumn Header="Прізвище" DisplayMemberBinding="{Binding LastName}" Width="150"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
 
     </Grid>
 </UserControl>
