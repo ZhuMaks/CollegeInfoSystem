@@ -107,9 +107,6 @@
                             <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Button.Style>
@@ -123,9 +120,6 @@
                             <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Button.Style>
@@ -137,9 +131,6 @@
                         <Setter Property="Visibility" Value="Collapsed"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding CurrentUserRole}" Value="admin">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding CurrentUserRole}" Value="teacher">
                                 <Setter Property="Visibility" Value="Visible"/>
                             </DataTrigger>
                         </Style.Triggers>

@@ -63,6 +63,9 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+# Не додавати appsettings.json з паролями
+CollegeInfoSystem/Config/appsettings.json
+
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 

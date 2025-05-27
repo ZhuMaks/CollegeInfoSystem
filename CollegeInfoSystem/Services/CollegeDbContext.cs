@@ -1,5 +1,7 @@
 ﻿using CollegeInfoSystem.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace CollegeInfoSystem.Services
 {
@@ -15,7 +17,17 @@ namespace CollegeInfoSystem.Services
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=tcp:diploma-sqlserver.database.windows.net,1433;Initial Catalog=CollegeDB;Persist Security Info=False;User ID=admin1;Password=Yq9JA2f@PFsT8iSG;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            if (!optionsBuilder.IsConfigured)
+            {
+                // Буде шукати appsettings.json в корені проекту
+                IConfigurationRoot configuration = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("Config/appsettings.json")
+                    .Build();
+
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+                optionsBuilder.UseSqlServer(connectionString);
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

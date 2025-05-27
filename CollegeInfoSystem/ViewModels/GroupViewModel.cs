@@ -130,7 +130,7 @@ public class GroupViewModel : BaseViewModel, ILoadable
     }
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
-        if (_isEditing) return;
+        if (_isEditing || SelectedGroup != null) return;
 
         _refreshTimer.Stop();
         try
@@ -214,11 +214,11 @@ public class GroupViewModel : BaseViewModel, ILoadable
         }
     }
 
-    private bool CanExecuteAddGroup() => CurrentUserRole == "admin";
-    private bool CanExecuteUpdateGroup() => SelectedGroup != null && CurrentUserRole == "admin";
+    private bool CanExecuteAddGroup() => CurrentUserRole is "admin" or "teacher";
+    private bool CanExecuteUpdateGroup() => SelectedGroup != null && CurrentUserRole is "admin" or "teacher";
     private bool CanExecuteDeleteGroup()
     {
-        return CurrentUserRole == "admin" &&
+        return CurrentUserRole is "admin" or "teacher" &&
                (SelectedGroup != null || (SelectedGroups != null && SelectedGroups.Any()));
     }
     private bool CanExecuteExport() => true;

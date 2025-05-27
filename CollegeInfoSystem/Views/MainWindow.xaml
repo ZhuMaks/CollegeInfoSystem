@@ -62,7 +62,7 @@
                     <Button Content="Розклад" Command="{Binding OpenScheduleViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
                     <Button Content="Факультети" Command="{Binding OpenFacultyViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
                     <Button Content="Працівники" Command="{Binding OpenStaffViewCommand}" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
-                    <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Visibility="Collapsed" Style="{DynamicResource NavButtonStyle}" Height="30" Margin="0,0,0,20"/>
+                    <Button x:Name="UsersButton" Content="Користувачі" Command="{Binding OpenUsersViewCommand}" Visibility="Collapsed" Style="{DynamicResource NavButtonStyle}" Height="35" Margin="0,0,0,20"/>
                 </StackPanel>
             </Border>
 

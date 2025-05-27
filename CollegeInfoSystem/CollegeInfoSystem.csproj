@@ -9,7 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Config\" />
+    <None Remove="Config\appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Config\appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Data\" />
   </ItemGroup>
 
@@ -29,6 +38,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.5" />
     <PackageReference Include="MigraDocCore.DocumentObjectModel" Version="1.3.67" />
     <PackageReference Include="MigraDocCore.Rendering" Version="1.3.67" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
