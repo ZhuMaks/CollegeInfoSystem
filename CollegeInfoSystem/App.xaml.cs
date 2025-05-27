@@ -23,12 +23,12 @@ namespace CollegeInfoSystem
 
                 var dbContext = new CollegeDbContext();
 
-                var studentService = new StudentService(dbContext);
-                var teacherService = new TeacherService(dbContext);
-                var facultyService = new FacultyService(dbContext);
-                var groupService = new GroupService(dbContext);
-                var scheduleService = new ScheduleService(dbContext);
-                var staffService = new StaffService(dbContext);
+                var studentService = new StudentService();
+                var teacherService = new TeacherService();
+                var facultyService = new FacultyService();
+                var groupService = new GroupService();
+                var scheduleService = new ScheduleService();
+                var staffService = new StaffService();
 
                 var studentViewModel = new StudentViewModel(studentService, groupService, CurrentUserRole);
                 var teacherViewModel = new TeacherViewModel(teacherService, CurrentUserRole);
