@@ -1,4 +1,5 @@
-﻿using CollegeInfoSystem.Models;
+﻿using CollegeInfoSystem;
+using CollegeInfoSystem.Models;
 using CollegeInfoSystem.Services;
 using CollegeInfoSystem.ViewModels;
 using CommunityToolkit.Mvvm.Input;
@@ -71,16 +72,25 @@ public class GroupDialogViewModel : BaseViewModel
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
 
-        Task.Run(async () => await LoadOptionsAsync());
+        _ = LoadOptionsAsync(); // без Task.Run
     }
 
     private async Task LoadOptionsAsync()
     {
         var faculties = await _facultyService.GetAllFacultiesAsync();
-        var teachers = await _teacherService.GetAllTeachersAsync();
+        var curators = (await _teacherService.GetAllTeachersAsync()).Where(t => t.IsCurator);
 
-        Faculties = new ObservableCollection<Faculty>(faculties);
-        Teachers = new ObservableCollection<Teacher>(teachers.Where(t => t.IsCurator));
+        // оновлення колекцій без втрати прив’язки
+        App.Current.Dispatcher.Invoke(() =>
+        {
+            Faculties.Clear();
+            foreach (var faculty in faculties)
+                Faculties.Add(faculty);
+
+            Teachers.Clear();
+            foreach (var curator in curators)
+                Teachers.Add(curator);
+        });
     }
 
     private bool ValidateFields()

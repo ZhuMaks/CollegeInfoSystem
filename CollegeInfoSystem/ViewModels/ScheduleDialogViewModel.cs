@@ -106,9 +106,16 @@ public class ScheduleDialogViewModel : BaseViewModel
 
     private async Task LoadDataAsync()
     {
-        Groups = new ObservableCollection<Group>(await _groupService.GetAllGroupsAsync());
-        Teachers = new ObservableCollection<Teacher>(await _teacherService.GetAllTeachersAsync());
+        var groups = await _groupService.GetAllGroupsAsync();
+        var teachers = await _teacherService.GetAllTeachersAsync();
+
+        Groups = new ObservableCollection<Group>(groups);
+        OnPropertyChanged(nameof(Groups));
+
+        Teachers = new ObservableCollection<Teacher>(teachers);
+        OnPropertyChanged(nameof(Teachers));
     }
+
 
     private bool ValidateFields()
     {

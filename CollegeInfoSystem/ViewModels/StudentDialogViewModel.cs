@@ -117,8 +117,14 @@ public class StudentDialogViewModel : BaseViewModel
     private async Task LoadGroupsAsync()
     {
         var groups = await _groupService.GetAllGroupsAsync();
-        Groups = new ObservableCollection<Group>(groups);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Groups.Clear();
+            foreach (var group in groups)
+                Groups.Add(group);
+        });
     }
+
 
     private bool ValidateFields()
     {
