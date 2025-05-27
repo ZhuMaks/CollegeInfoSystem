@@ -22,6 +22,8 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
     private Teacher _selectedTeacher;
     private DispatcherTimer _refreshTimer;
+    private bool _isEditing = false;
+
     public Teacher SelectedTeacher
     {
         get => _selectedTeacher;
@@ -101,6 +103,8 @@ public class TeacherViewModel : BaseViewModel, ILoadable
     }
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
+        if (_isEditing) return;
+
         _refreshTimer.Stop();
         try
         {
@@ -115,6 +119,7 @@ public class TeacherViewModel : BaseViewModel, ILoadable
             _refreshTimer.Start();
         }
     }
+
 
 
     private void UpdateCommandsCanExecute()
@@ -169,38 +174,70 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
     private async void AddTeacher()
     {
-        var newTeacher = new Teacher();
-        if (OpenTeacherDialog(newTeacher))
+        _isEditing = true;
+
+        try
         {
-            await _teacherService.AddTeacherAsync(newTeacher);
-            await LoadDataAsync();
+            var newTeacher = new Teacher();
+            if (OpenTeacherDialog(newTeacher))
+            {
+                await _teacherService.AddTeacherAsync(newTeacher);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
+
     private async void UpdateTeacher()
     {
-        if (SelectedTeacher != null && OpenTeacherDialog(SelectedTeacher))
+        if (SelectedTeacher == null)
+            return;
+
+        _isEditing = true;
+
+        try
         {
-            await _teacherService.UpdateTeacherAsync(SelectedTeacher);
-            await LoadDataAsync();
+            if (OpenTeacherDialog(SelectedTeacher))
+            {
+                await _teacherService.UpdateTeacherAsync(SelectedTeacher);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
     private async Task DeleteTeacherAsync()
     {
-        if (SelectedTeachers?.Count > 1)
-        {
-            var idsToDelete = SelectedTeachers.Select(t => t.TeacherID).ToList();
-            foreach (var id in idsToDelete)
-                await _teacherService.DeleteTeacherAsync(id);
-        }
-        else if (SelectedTeacher != null)
-        {
-            await _teacherService.DeleteTeacherAsync(SelectedTeacher.TeacherID);
-        }
+        _isEditing = true;
 
-        await LoadDataAsync();
+        try
+        {
+            if (SelectedTeachers?.Count > 1)
+            {
+                var idsToDelete = SelectedTeachers.Select(t => t.TeacherID).ToList();
+                foreach (var id in idsToDelete)
+                    await _teacherService.DeleteTeacherAsync(id);
+            }
+            else if (SelectedTeacher != null)
+            {
+                await _teacherService.DeleteTeacherAsync(SelectedTeacher.TeacherID);
+            }
+
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 
 
     private bool OpenTeacherDialog(Teacher teacher)
@@ -257,72 +294,82 @@ public class TeacherViewModel : BaseViewModel, ILoadable
 
     private async Task ImportFromExcel()
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть файл Excel"
-        };
+        _isEditing = true;
 
-        if (dialog.ShowDialog() == true)
+        try
         {
-            try
+            var dialog = new OpenFileDialog
             {
-                using var workbook = new XLWorkbook(dialog.FileName);
-                var worksheet = workbook.Worksheets.First();
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Виберіть файл Excel"
+            };
 
-                var existingTeachers = await _teacherService.GetAllTeachersAsync();
-
-                int imported = 0;
-                int duplicates = 0;
-
-                foreach (var row in rows)
+            if (dialog.ShowDialog() == true)
+            {
+                try
                 {
-                    var firstName = row.Cell(1).GetString().Trim();
-                    var lastName = row.Cell(2).GetString().Trim();
-                    var email = row.Cell(3).GetString().Trim();
-                    var isCurator = row.Cell(4).GetString().Trim().Equals("Так", StringComparison.OrdinalIgnoreCase);
-                    var phone = row.Cell(5).GetString().Trim();
+                    using var workbook = new XLWorkbook(dialog.FileName);
+                    var worksheet = workbook.Worksheets.First();
+                    var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                    bool exists = existingTeachers.Any(t =>
-                        t.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
-                        t.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
-                        t.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
-                    );
+                    var existingTeachers = await _teacherService.GetAllTeachersAsync();
 
-                    if (!exists)
+                    int imported = 0;
+                    int duplicates = 0;
+
+                    foreach (var row in rows)
                     {
-                        var teacher = new Teacher
+                        var firstName = row.Cell(1).GetString().Trim();
+                        var lastName = row.Cell(2).GetString().Trim();
+                        var email = row.Cell(3).GetString().Trim();
+                        var isCurator = row.Cell(4).GetString().Trim().Equals("Так", StringComparison.OrdinalIgnoreCase);
+                        var phone = row.Cell(5).GetString().Trim();
+
+                        bool exists = existingTeachers.Any(t =>
+                            t.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                            t.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                            t.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                        );
+
+                        if (!exists)
                         {
-                            FirstName = firstName,
-                            LastName = lastName,
-                            Email = email,
-                            IsCurator = isCurator,
-                            Phone = phone
-                        };
+                            var teacher = new Teacher
+                            {
+                                FirstName = firstName,
+                                LastName = lastName,
+                                Email = email,
+                                IsCurator = isCurator,
+                                Phone = phone
+                            };
 
-                        await _teacherService.AddTeacherAsync(teacher);
-                        imported++;
+                            await _teacherService.AddTeacherAsync(teacher);
+                            imported++;
+                        }
+                        else
+                        {
+                            duplicates++;
+                        }
                     }
-                    else
-                    {
-                        duplicates++;
-                    }
+
+                    await LoadDataAsync();
+
+                    System.Windows.MessageBox.Show(
+                        $"Імпорт завершено:\nДодано: {imported}\nПропущено (дублікати): {duplicates}",
+                        "Результат імпорту",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information
+                    );
                 }
-
-                await LoadDataAsync();
-
-                System.Windows.MessageBox.Show(
-                    $"Імпорт завершено:\nДодано: {imported}\nПропущено (дублікати): {duplicates}",
-                    "Результат імпорту",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Information
-                );
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+                }
             }
         }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 }

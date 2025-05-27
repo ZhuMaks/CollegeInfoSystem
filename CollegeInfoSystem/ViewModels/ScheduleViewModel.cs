@@ -30,6 +30,8 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     public ObservableCollection<Teacher> Teachers { get; } = new();
 
     private string _currentUserRole;
+    private bool _isEditing = false;
+
     public string CurrentUserRole
     {
         get => _currentUserRole;
@@ -73,7 +75,9 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     }
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
-        _refreshTimer.Stop(); 
+        if (_isEditing) return;
+
+        _refreshTimer.Stop();
         try
         {
             await LoadDataAsync();
@@ -84,9 +88,10 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         }
         finally
         {
-            _refreshTimer.Start(); 
+            _refreshTimer.Start();
         }
     }
+
 
     private void UpdateCommandsCanExecute()
     {
@@ -197,40 +202,72 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
     private async void AddSchedule()
     {
-        var newSchedule = new Schedule();
-        if (OpenScheduleDialog(newSchedule))
+        _isEditing = true;
+
+        try
         {
-            await _scheduleService.AddScheduleAsync(newSchedule);
-            await LoadDataAsync();
+            var newSchedule = new Schedule();
+            if (OpenScheduleDialog(newSchedule))
+            {
+                await _scheduleService.AddScheduleAsync(newSchedule);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
+
     private async void UpdateSchedule()
     {
-        if (SelectedSchedule != null && OpenScheduleDialog(SelectedSchedule))
+        if (SelectedSchedule == null)
+            return;
+
+        _isEditing = true;
+
+        try
         {
-            await _scheduleService.UpdateScheduleAsync(SelectedSchedule);
-            await LoadDataAsync();
+            if (OpenScheduleDialog(SelectedSchedule))
+            {
+                await _scheduleService.UpdateScheduleAsync(SelectedSchedule);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
     private async Task DeleteScheduleAsync()
     {
-        if (SelectedSchedules.Any())
-        {
-            foreach (var schedule in SelectedSchedules.ToList())
-            {
-                await _scheduleService.DeleteScheduleAsync(schedule.ScheduleID);
-            }
-            SelectedSchedules.Clear();
-        }
-        else if (SelectedSchedule != null)
-        {
-            await _scheduleService.DeleteScheduleAsync(SelectedSchedule.ScheduleID);
-        }
+        _isEditing = true;
 
-        await LoadDataAsync();
+        try
+        {
+            if (SelectedSchedules.Any())
+            {
+                foreach (var schedule in SelectedSchedules.ToList())
+                {
+                    await _scheduleService.DeleteScheduleAsync(schedule.ScheduleID);
+                }
+                SelectedSchedules.Clear();
+            }
+            else if (SelectedSchedule != null)
+            {
+                await _scheduleService.DeleteScheduleAsync(SelectedSchedule.ScheduleID);
+            }
+
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 
 
     private bool OpenScheduleDialog(Schedule schedule)
@@ -291,101 +328,110 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
     private async void ImportFromExcel()
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть файл Excel"
-        };
+        _isEditing = true;
 
-        if (dialog.ShowDialog() == true)
+        try
         {
-            try
+            var dialog = new OpenFileDialog
             {
-                using var workbook = new XLWorkbook(dialog.FileName);
-                var worksheet = workbook.Worksheets.First();
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Виберіть файл Excel"
+            };
 
-                var allGroups = Groups.ToList();
-                var allTeachers = Teachers.ToList();
-
-                int imported = 0;
-                int skipped = 0;
-
-                foreach (var row in rows)
+            if (dialog.ShowDialog() == true)
+            {
+                try
                 {
-                    var groupName = row.Cell(1).GetString().Trim();
-                    var teacherName = row.Cell(2).GetString().Trim();
-                    var subject = row.Cell(3).GetString().Trim();
-                    var day = row.Cell(4).GetString().Trim();
+                    using var workbook = new XLWorkbook(dialog.FileName);
+                    var worksheet = workbook.Worksheets.First();
+                    var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                    if (!row.Cell(5).TryGetValue(out DateTime startDateTime))
+                    var allGroups = Groups.ToList();
+                    var allTeachers = Teachers.ToList();
+
+                    int imported = 0;
+                    int skipped = 0;
+
+                    foreach (var row in rows)
                     {
-                        System.Windows.MessageBox.Show($"Невірний формат часу початку у рядку {row.RowNumber()}");
-                        skipped++;
-                        continue;
+                        var groupName = row.Cell(1).GetString().Trim();
+                        var teacherName = row.Cell(2).GetString().Trim();
+                        var subject = row.Cell(3).GetString().Trim();
+                        var day = row.Cell(4).GetString().Trim();
+
+                        if (!row.Cell(5).TryGetValue(out DateTime startDateTime))
+                        {
+                            System.Windows.MessageBox.Show($"Невірний формат часу початку у рядку {row.RowNumber()}");
+                            skipped++;
+                            continue;
+                        }
+                        var startTime = startDateTime.TimeOfDay;
+
+                        if (!row.Cell(6).TryGetValue(out DateTime endDateTime))
+                        {
+                            System.Windows.MessageBox.Show($"Невірний формат часу завершення у рядку {row.RowNumber()}");
+                            skipped++;
+                            continue;
+                        }
+                        var endTime = endDateTime.TimeOfDay;
+
+                        var room = row.Cell(7).GetString().Trim();
+
+                        var group = allGroups.FirstOrDefault(g => g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+                        if (group == null)
+                        {
+                            System.Windows.MessageBox.Show($"Групу '{groupName}' не знайдено у базі. Рядок {row.RowNumber()} пропущено.");
+                            skipped++;
+                            continue;
+                        }
+
+                        var teacher = allTeachers.FirstOrDefault(t =>
+                            $"{t.LastName} {t.FirstName}".Equals(teacherName, StringComparison.OrdinalIgnoreCase) ||
+                            $"{t.FirstName} {t.LastName}".Equals(teacherName, StringComparison.OrdinalIgnoreCase));
+
+                        if (teacher == null)
+                        {
+                            System.Windows.MessageBox.Show($"Викладача '{teacherName}' не знайдено у базі. Рядок {row.RowNumber()} пропущено.");
+                            skipped++;
+                            continue;
+                        }
+
+                        var schedule = new Schedule
+                        {
+                            GroupID = group.GroupID,
+                            TeacherID = teacher.TeacherID,
+                            Subject = subject,
+                            DayOfWeek = day,
+                            StartTime = startTime,
+                            EndTime = endTime,
+                            Room = room
+                        };
+
+                        try
+                        {
+                            await _scheduleService.AddScheduleAsync(schedule);
+                            imported++;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Windows.MessageBox.Show($"Помилка додавання розкладу у рядку {row.RowNumber()}: {ex.Message}");
+                            skipped++;
+                        }
                     }
-                    var startTime = startDateTime.TimeOfDay;
 
-                    if (!row.Cell(6).TryGetValue(out DateTime endDateTime))
-                    {
-                        System.Windows.MessageBox.Show($"Невірний формат часу завершення у рядку {row.RowNumber()}");
-                        skipped++;
-                        continue;
-                    }
-                    var endTime = endDateTime.TimeOfDay;
+                    await LoadDataAsync();
 
-                    var room = row.Cell(7).GetString().Trim();
-
-                    var group = allGroups.FirstOrDefault(g => g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
-                    if (group == null)
-                    {
-                        System.Windows.MessageBox.Show($"Групу '{groupName}' не знайдено у базі. Рядок {row.RowNumber()} пропущено.");
-                        skipped++;
-                        continue;
-                    }
-
-                    var teacher = allTeachers.FirstOrDefault(t =>
-                        $"{t.LastName} {t.FirstName}".Equals(teacherName, StringComparison.OrdinalIgnoreCase)
-                        || $"{t.FirstName} {t.LastName}".Equals(teacherName, StringComparison.OrdinalIgnoreCase));
-
-                    if (teacher == null)
-                    {
-                        System.Windows.MessageBox.Show($"Викладача '{teacherName}' не знайдено у базі. Рядок {row.RowNumber()} пропущено.");
-                        skipped++;
-                        continue;
-                    }
-
-                    var schedule = new Schedule
-                    {
-                        GroupID = group.GroupID,
-                        TeacherID = teacher.TeacherID,
-                        Subject = subject,
-                        DayOfWeek = day,
-                        StartTime = startTime,
-                        EndTime = endTime,
-                        Room = room
-                    };
-
-                    try
-                    {
-                        await _scheduleService.AddScheduleAsync(schedule);
-                        imported++;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show($"Помилка додавання розкладу у рядку {row.RowNumber()}: {ex.Message}");
-                        skipped++;
-                    }
+                    System.Windows.MessageBox.Show($"Імпорт завершено. Додано записів: {imported}, пропущено: {skipped}", "Успішно", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
-
-                await LoadDataAsync();
-
-                System.Windows.MessageBox.Show($"Імпорт завершено. Додано записів: {imported}, пропущено: {skipped}", "Успішно", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+                }
             }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
-            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 }

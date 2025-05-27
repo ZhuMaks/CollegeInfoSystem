@@ -15,7 +15,7 @@ namespace CollegeInfoSystem.Services
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=CollegeDB;Trusted_Connection=True;");
+            optionsBuilder.UseSqlServer("Server=tcp:diploma-sqlserver.database.windows.net,1433;Initial Catalog=CollegeDB;Persist Security Info=False;User ID=admin1;Password=Yq9JA2f@PFsT8iSG;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

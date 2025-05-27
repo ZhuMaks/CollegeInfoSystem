@@ -15,6 +15,7 @@ namespace CollegeInfoSystem.ViewModels;
 public class FacultyViewModel : BaseViewModel, ILoadable
 {
     private readonly FacultyService _facultyService;
+    private bool _isEditing = false;
 
     public ObservableCollection<Faculty> Faculties { get; set; } = new();
     public ObservableCollection<Faculty> SelectedFaculties { get; set; } = new();
@@ -69,9 +70,12 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         _refreshTimer.Tick += RefreshTimer_Tick;
         _refreshTimer.Start();
     }
+
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
-        _refreshTimer.Stop(); 
+        if (_isEditing) return;
+
+        _refreshTimer.Stop();
         try
         {
             await LoadDataAsync();
@@ -82,7 +86,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         }
         finally
         {
-            _refreshTimer.Start(); 
+            _refreshTimer.Start();
         }
     }
 
@@ -114,39 +118,65 @@ public class FacultyViewModel : BaseViewModel, ILoadable
 
     private async void AddFaculty()
     {
-        var newFaculty = new Faculty();
-        if (OpenFacultyDialog(newFaculty))
+        _isEditing = true;
+
+        try
         {
-            await _facultyService.AddFacultyAsync(newFaculty);
-            await LoadDataAsync();
+            var newFaculty = new Faculty();
+            if (OpenFacultyDialog(newFaculty))
+            {
+                await _facultyService.AddFacultyAsync(newFaculty);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
     private async void UpdateFaculty()
     {
-        if (SelectedFaculty != null && OpenFacultyDialog(SelectedFaculty))
+        _isEditing = true;
+
+        try
         {
-            await _facultyService.UpdateFacultyAsync(SelectedFaculty);
-            await LoadDataAsync();
+            if (SelectedFaculty != null && OpenFacultyDialog(SelectedFaculty))
+            {
+                await _facultyService.UpdateFacultyAsync(SelectedFaculty);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
     private async Task DeleteFacultyAsync()
     {
-        if (SelectedFaculties?.Count > 1)
-        {
-            var idsToDelete = SelectedFaculties.Select(f => f.FacultyID).ToList();
-            foreach (var id in idsToDelete)
-                await _facultyService.DeleteFacultyAsync(id);
-        }
-        else if (SelectedFaculty != null)
-        {
-            await _facultyService.DeleteFacultyAsync(SelectedFaculty.FacultyID);
-        }
+        _isEditing = true;
 
-        await LoadDataAsync();
+        try
+        {
+            if (SelectedFaculties?.Count > 1)
+            {
+                var idsToDelete = SelectedFaculties.Select(f => f.FacultyID).ToList();
+                foreach (var id in idsToDelete)
+                    await _facultyService.DeleteFacultyAsync(id);
+            }
+            else if (SelectedFaculty != null)
+            {
+                await _facultyService.DeleteFacultyAsync(SelectedFaculty.FacultyID);
+            }
+
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
-
 
     private bool OpenFacultyDialog(Faculty faculty)
     {
@@ -166,54 +196,63 @@ public class FacultyViewModel : BaseViewModel, ILoadable
 
     private async Task ImportFromExcel()
     {
-        var dialog = new OpenFileDialog
+        _isEditing = true;
+
+        try
         {
-            Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть Excel-файл з факультетами"
-        };
-
-        if (dialog.ShowDialog() == true)
-        {
-            using var workbook = new XLWorkbook(dialog.FileName);
-            var worksheet = workbook.Worksheet(1);
-            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); 
-
-            var existingFaculties = await _facultyService.GetAllFacultiesAsync();
-
-            int importedCount = 0;
-            int duplicateCount = 0;
-
-            foreach (var row in rows)
+            var dialog = new OpenFileDialog
             {
-                var facultyName = row.Cell(1).GetString().Trim();
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Виберіть Excel-файл з факультетами"
+            };
 
-                bool exists = existingFaculties.Any(f =>
-                    f.FacultyName.Equals(facultyName, System.StringComparison.OrdinalIgnoreCase));
+            if (dialog.ShowDialog() == true)
+            {
+                using var workbook = new XLWorkbook(dialog.FileName);
+                var worksheet = workbook.Worksheet(1);
+                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                if (!exists)
+                var existingFaculties = await _facultyService.GetAllFacultiesAsync();
+
+                int importedCount = 0;
+                int duplicateCount = 0;
+
+                foreach (var row in rows)
                 {
-                    var faculty = new Faculty
+                    var facultyName = row.Cell(1).GetString().Trim();
+
+                    bool exists = existingFaculties.Any(f =>
+                        f.FacultyName.Equals(facultyName, System.StringComparison.OrdinalIgnoreCase));
+
+                    if (!exists)
                     {
-                        FacultyName = facultyName
-                    };
+                        var faculty = new Faculty { FacultyName = facultyName };
+                        await _facultyService.AddFacultyAsync(faculty);
+                        importedCount++;
+                    }
+                    else
+                    {
+                        duplicateCount++;
+                    }
+                }
 
-                    await _facultyService.AddFacultyAsync(faculty);
-                    importedCount++;
-                }
-                else
-                {
-                    duplicateCount++;
-                }
+                await LoadDataAsync();
+
+                MessageBox.Show(
+                    $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                    "Результат імпорту",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
             }
-
-            await LoadDataAsync();
-
-            MessageBox.Show(
-                $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
-                "Результат імпорту",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information
-            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Помилка при імпорті: " + ex.Message);
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 }

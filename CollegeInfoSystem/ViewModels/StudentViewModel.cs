@@ -38,6 +38,8 @@ public class StudentViewModel : BaseViewModel, ILoadable
         }
     }
 
+    private bool _isEditing = false;
+
     private string _searchText;
     public string SearchText
     {
@@ -109,9 +111,11 @@ public class StudentViewModel : BaseViewModel, ILoadable
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
         _refreshTimer.Stop();
+
         try
         {
-            await LoadDataAsync();
+            if (!_isEditing)
+                await LoadDataAsync();
         }
         catch (Exception ex)
         {
@@ -119,9 +123,10 @@ public class StudentViewModel : BaseViewModel, ILoadable
         }
         finally
         {
-            _refreshTimer.Start(); 
+            _refreshTimer.Start();
         }
     }
+
 
 
     private void UpdateCommandsCanExecute()
@@ -180,38 +185,71 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
     private async void AddStudent()
     {
-        var newStudent = new Student();
-        if (OpenStudentDialog(newStudent))
+        _isEditing = true;
+
+        try
         {
-            await _studentService.AddStudentAsync(newStudent);
-            await LoadDataAsync();
+            var newStudent = new Student();
+            if (OpenStudentDialog(newStudent))
+            {
+                await _studentService.AddStudentAsync(newStudent);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
+
 
     private async void UpdateStudent()
     {
-        if (SelectedStudent != null && OpenStudentDialog(SelectedStudent))
+        if (SelectedStudent == null)
+            return;
+
+        _isEditing = true;
+
+        try
         {
-            await _studentService.UpdateStudentAsync(SelectedStudent);
-            await LoadDataAsync();
+            if (OpenStudentDialog(SelectedStudent))
+            {
+                await _studentService.UpdateStudentAsync(SelectedStudent);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
+
 
     private async Task DeleteStudentAsync()
     {
-        if (SelectedStudents?.Count > 1)
-        {
-            var idsToDelete = SelectedStudents.Select(s => s.StudentID).ToList();
-            foreach (var id in idsToDelete)
-                await _studentService.DeleteStudentAsync(id);
-        }
-        else if (SelectedStudent != null)
-        {
-            await _studentService.DeleteStudentAsync(SelectedStudent.StudentID);
-        }
+        _isEditing = true;
 
-        await LoadDataAsync();
+        try
+        {
+            if (SelectedStudents?.Count > 1)
+            {
+                var idsToDelete = SelectedStudents.Select(s => s.StudentID).ToList();
+                foreach (var id in idsToDelete)
+                    await _studentService.DeleteStudentAsync(id);
+            }
+            else if (SelectedStudent != null)
+            {
+                await _studentService.DeleteStudentAsync(SelectedStudent.StudentID);
+            }
+
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 
 
     private bool OpenStudentDialog(Student student)
@@ -272,79 +310,89 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
     private async void ImportFromExcel()
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть файл Excel"
-        };
+        _isEditing = true;
 
-        if (dialog.ShowDialog() == true)
+        try
         {
-            try
+            var dialog = new OpenFileDialog
             {
-                using var workbook = new XLWorkbook(dialog.FileName);
-                var worksheet = workbook.Worksheets.First();
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Виберіть файл Excel"
+            };
 
-                var existingStudents = await _studentService.GetAllStudentsAsync();
-
-                int importedCount = 0;
-                int duplicateCount = 0;
-
-                foreach (var row in rows)
+            if (dialog.ShowDialog() == true)
+            {
+                try
                 {
-                    var firstName = row.Cell(1).GetString().Trim();
-                    var lastName = row.Cell(2).GetString().Trim();
-                    var email = row.Cell(3).GetString().Trim();
-                    var phone = row.Cell(4).GetString().Trim();
-                    var dateOfBirth = row.Cell(5).GetDateTime();
-                    var address = row.Cell(6).GetString().Trim();
-                    var groupName = row.Cell(7).GetString().Trim();
+                    using var workbook = new XLWorkbook(dialog.FileName);
+                    var worksheet = workbook.Worksheets.First();
+                    var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                    bool exists = existingStudents.Any(s =>
-                        s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
-                        s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
-                        s.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
-                    );
+                    var existingStudents = await _studentService.GetAllStudentsAsync();
 
-                    if (!exists)
+                    int importedCount = 0;
+                    int duplicateCount = 0;
+
+                    foreach (var row in rows)
                     {
-                        var group = Groups.FirstOrDefault(g =>
-                            g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+                        var firstName = row.Cell(1).GetString().Trim();
+                        var lastName = row.Cell(2).GetString().Trim();
+                        var email = row.Cell(3).GetString().Trim();
+                        var phone = row.Cell(4).GetString().Trim();
+                        var dateOfBirth = row.Cell(5).GetDateTime();
+                        var address = row.Cell(6).GetString().Trim();
+                        var groupName = row.Cell(7).GetString().Trim();
 
-                        var student = new Student
+                        bool exists = existingStudents.Any(s =>
+                            s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
+                            s.LastName.Equals(lastName, StringComparison.OrdinalIgnoreCase) &&
+                            s.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                        );
+
+                        if (!exists)
                         {
-                            FirstName = firstName,
-                            LastName = lastName,
-                            Email = email,
-                            Phone = phone,
-                            DateOfBirth = dateOfBirth,
-                            Address = address,
-                            GroupID = group?.GroupID ?? 0
-                        };
+                            var group = Groups.FirstOrDefault(g =>
+                                g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-                        await _studentService.AddStudentAsync(student);
-                        importedCount++;
+                            var student = new Student
+                            {
+                                FirstName = firstName,
+                                LastName = lastName,
+                                Email = email,
+                                Phone = phone,
+                                DateOfBirth = dateOfBirth,
+                                Address = address,
+                                GroupID = group?.GroupID ?? 0
+                            };
+
+                            await _studentService.AddStudentAsync(student);
+                            importedCount++;
+                        }
+                        else
+                        {
+                            duplicateCount++;
+                        }
                     }
-                    else
-                    {
-                        duplicateCount++;
-                    }
+
+                    await LoadDataAsync();
+
+                    System.Windows.MessageBox.Show(
+                        $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
+                        "Результат імпорту",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information
+                    );
                 }
-
-                await LoadDataAsync();
-
-                System.Windows.MessageBox.Show(
-                    $"Імпорт завершено:\nДодано: {importedCount}\nПропущено (дублікати): {duplicateCount}",
-                    "Результат імпорту",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Information
-                );
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show("Помилка при імпорті: " + ex.Message);
+                }
             }
         }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 }

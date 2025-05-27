@@ -27,6 +27,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
     public ObservableCollection<Group> SelectedGroups { get; set; } = new();
     public ObservableCollection<Faculty> Faculties { get; set; } = new();
     private Faculty _selectedFaculty;
+    private bool _isEditing = false;
+
     public Faculty SelectedFaculty
     {
         get => _selectedFaculty;
@@ -128,6 +130,8 @@ public class GroupViewModel : BaseViewModel, ILoadable
     }
     private async void RefreshTimer_Tick(object? sender, EventArgs e)
     {
+        if (_isEditing) return;
+
         _refreshTimer.Stop();
         try
         {
@@ -142,6 +146,7 @@ public class GroupViewModel : BaseViewModel, ILoadable
             _refreshTimer.Start();
         }
     }
+
 
 
     private void UpdateCommandsCanExecute()
@@ -221,39 +226,72 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     private async void AddGroup()
     {
-        var newGroup = new Group();
-        if (OpenGroupDialog(newGroup))
+        _isEditing = true;
+
+        try
         {
-            await _groupService.AddGroupAsync(newGroup);
-            await LoadDataAsync();
+            var newGroup = new Group();
+            if (OpenGroupDialog(newGroup))
+            {
+                await _groupService.AddGroupAsync(newGroup);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
+
     private async void UpdateGroup()
     {
-        if (SelectedGroup != null && OpenGroupDialog(SelectedGroup))
+        if (SelectedGroup == null)
+            return;
+
+        _isEditing = true;
+
+        try
         {
-            await _groupService.UpdateGroupAsync(SelectedGroup);
-            await LoadDataAsync();
+            if (OpenGroupDialog(SelectedGroup))
+            {
+                await _groupService.UpdateGroupAsync(SelectedGroup);
+                await LoadDataAsync();
+            }
+        }
+        finally
+        {
+            _isEditing = false;
         }
     }
 
     private async Task DeleteGroupAsync()
     {
-        if (SelectedGroups != null && SelectedGroups.Any())
-        {
-            foreach (var group in SelectedGroups.ToList())
-            {
-                await _groupService.DeleteGroupAsync(group.GroupID);
-            }
-        }
-        else if (SelectedGroup != null)
-        {
-            await _groupService.DeleteGroupAsync(SelectedGroup.GroupID);
-        }
+        _isEditing = true;
 
-        await LoadDataAsync();
+        try
+        {
+            if (SelectedGroups != null && SelectedGroups.Any())
+            {
+                var idsToDelete = SelectedGroups.Select(g => g.GroupID).ToList();
+                foreach (var id in idsToDelete)
+                {
+                    await _groupService.DeleteGroupAsync(id);
+                }
+            }
+            else if (SelectedGroup != null)
+            {
+                await _groupService.DeleteGroupAsync(SelectedGroup.GroupID);
+            }
+
+            await LoadDataAsync();
+        }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 
 
     private bool OpenGroupDialog(Group group)
@@ -306,68 +344,78 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     private async void ImportFromExcel()
     {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "Excel Files (*.xlsx)|*.xlsx",
-            Title = "Виберіть файл Excel"
-        };
+        _isEditing = true;
 
-        if (dialog.ShowDialog() == true)
+        try
         {
-            try
+            var dialog = new OpenFileDialog
             {
-                using var workbook = new XLWorkbook(dialog.FileName);
-                var worksheet = workbook.Worksheets.First();
-                var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Title = "Виберіть файл Excel"
+            };
 
-                var existingGroups = await _groupService.GetAllGroupsAsync();
-                var existingFaculties = await _facultyService.GetAllFacultiesAsync();
-                var existingTeachers = await _teacherService.GetAllTeachersAsync();
-
-                int importedCount = 0;
-                int duplicateCount = 0;
-
-                foreach (var row in rows)
+            if (dialog.ShowDialog() == true)
+            {
+                try
                 {
-                    var groupName = row.Cell(1).GetString().Trim();
-                    var facultyName = row.Cell(2).GetString().Trim();
-                    var curatorName = row.Cell(3).GetString().Trim();
+                    using var workbook = new XLWorkbook(dialog.FileName);
+                    var worksheet = workbook.Worksheets.First();
+                    var rows = worksheet.RangeUsed().RowsUsed().Skip(1);
 
-                    bool exists = existingGroups.Any(g =>
-                        g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+                    var existingGroups = await _groupService.GetAllGroupsAsync();
+                    var existingFaculties = await _facultyService.GetAllFacultiesAsync();
+                    var existingTeachers = await _teacherService.GetAllTeachersAsync();
 
-                    if (!exists)
+                    int importedCount = 0;
+                    int duplicateCount = 0;
+
+                    foreach (var row in rows)
                     {
-                        var faculty = existingFaculties.FirstOrDefault(f =>
-                            f.FacultyName.Equals(facultyName, StringComparison.OrdinalIgnoreCase));
+                        var groupName = row.Cell(1).GetString().Trim();
+                        var facultyName = row.Cell(2).GetString().Trim();
+                        var curatorName = row.Cell(3).GetString().Trim();
 
-                        var curator = existingTeachers.FirstOrDefault(t =>
-                            t.FullName.Equals(curatorName, StringComparison.OrdinalIgnoreCase));
+                        bool exists = existingGroups.Any(g =>
+                            g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
 
-                        var group = new Group
+                        if (!exists)
                         {
-                            GroupName = groupName,
-                            FacultyID = faculty?.FacultyID ?? 0,
-                            CuratorID = curator?.TeacherID
-                        };
-                        await _groupService.AddGroupAsync(group);
-                        importedCount++;
-                    }
-                    else
-                    {
-                        duplicateCount++;
-                    }
-                }
+                            var faculty = existingFaculties.FirstOrDefault(f =>
+                                f.FacultyName.Equals(facultyName, StringComparison.OrdinalIgnoreCase));
 
-                await LoadDataAsync();
-                ShowMessage($"Імпорт завершено. Додано: {importedCount}, пропущено дублікати: {duplicateCount}");
-            }
-            catch (Exception ex)
-            {
-                ShowMessage("Помилка імпорту: " + ex.Message);
+                            var curator = existingTeachers.FirstOrDefault(t =>
+                                t.FullName.Equals(curatorName, StringComparison.OrdinalIgnoreCase));
+
+                            var group = new Group
+                            {
+                                GroupName = groupName,
+                                FacultyID = faculty?.FacultyID ?? 0,
+                                CuratorID = curator?.TeacherID
+                            };
+                            await _groupService.AddGroupAsync(group);
+                            importedCount++;
+                        }
+                        else
+                        {
+                            duplicateCount++;
+                        }
+                    }
+
+                    await LoadDataAsync();
+                    ShowMessage($"Імпорт завершено. Додано: {importedCount}, пропущено дублікати: {duplicateCount}");
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage("Помилка імпорту: " + ex.Message);
+                }
             }
         }
+        finally
+        {
+            _isEditing = false;
+        }
     }
+
 
     private void ShowMessage(string message)
     {
