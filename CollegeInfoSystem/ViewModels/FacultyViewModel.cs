@@ -5,6 +5,7 @@ using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.Windows.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,6 +19,7 @@ public class FacultyViewModel : BaseViewModel, ILoadable
     public ObservableCollection<Faculty> Faculties { get; set; } = new();
     public ObservableCollection<Faculty> SelectedFaculties { get; set; } = new();
 
+    private DispatcherTimer _refreshTimer;
     private Faculty _selectedFaculty;
     public Faculty SelectedFaculty
     {
@@ -61,6 +63,11 @@ public class FacultyViewModel : BaseViewModel, ILoadable
         ImportFromExcelCommand = new RelayCommand(async () => await ImportFromExcel(), CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+
+        _refreshTimer = new DispatcherTimer();
+        _refreshTimer.Interval = TimeSpan.FromSeconds(15);
+        _refreshTimer.Tick += async (s, e) => await LoadDataAsync();
+        _refreshTimer.Start();
     }
 
     private void UpdateCommandCanExecute()

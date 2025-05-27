@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Windows.Input;
+using System.Windows.Threading;
 using ClosedXML.Excel;
 using Microsoft.Win32;
 using System;
@@ -23,7 +24,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
     public ObservableCollection<Group> Groups { get; set; } = new();
     public ObservableCollection<Student> SelectedStudents { get; set; } = new();
 
-
+    private DispatcherTimer _refreshTimer;
     private Student _selectedStudent;
     public Student SelectedStudent
     {
@@ -97,6 +98,12 @@ public class StudentViewModel : BaseViewModel, ILoadable
         ImportFromExcelCommand = new RelayCommand(ImportFromExcel, CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+
+        _refreshTimer = new DispatcherTimer();
+        _refreshTimer.Interval = TimeSpan.FromSeconds(15);
+        _refreshTimer.Tick += async (s, e) => await LoadDataAsync();
+        _refreshTimer.Start();
+
     }
 
     private void UpdateCommandsCanExecute()

@@ -5,6 +5,7 @@ using CollegeInfoSystem.Views;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using System.Linq;
 using System.Windows.Input;
 using ClosedXML.Excel;
@@ -18,6 +19,7 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
     private readonly ScheduleService _scheduleService;
     private readonly GroupService _groupService;
     private readonly TeacherService _teacherService;
+    private DispatcherTimer _refreshTimer;
 
     public ObservableCollection<Schedule> Schedules { get; set; } = new();
     public ObservableCollection<Schedule> SelectedSchedules { get; set; } = new();
@@ -63,6 +65,11 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         ImportFromExcelCommand = new RelayCommand(ImportFromExcel, CanExecuteImport);
 
         Task.Run(async () => await LoadDataAsync());
+
+        _refreshTimer = new DispatcherTimer();
+        _refreshTimer.Interval = TimeSpan.FromSeconds(15);
+        _refreshTimer.Tick += async (s, e) => await LoadDataAsync();
+        _refreshTimer.Start();
     }
 
     private void UpdateCommandsCanExecute()
