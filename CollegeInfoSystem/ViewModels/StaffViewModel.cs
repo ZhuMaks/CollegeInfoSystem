@@ -94,9 +94,26 @@ public class StaffViewModel : BaseViewModel, ILoadable
 
         _refreshTimer = new DispatcherTimer();
         _refreshTimer.Interval = TimeSpan.FromSeconds(15);
-        _refreshTimer.Tick += async (s, e) => await LoadDataAsync();
+        _refreshTimer.Tick += RefreshTimer_Tick;
         _refreshTimer.Start();
     }
+    private async void RefreshTimer_Tick(object? sender, EventArgs e)
+    {
+        _refreshTimer.Stop(); 
+        try
+        {
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("Помилка при оновленні: " + ex.Message);
+        }
+        finally
+        {
+            _refreshTimer.Start();
+        }
+    }
+
 
     private void UpdateCommandStates()
     {
