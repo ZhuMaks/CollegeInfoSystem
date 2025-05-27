@@ -3,7 +3,6 @@ using CollegeInfoSystem.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
-using System.Windows.Threading;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -14,7 +13,6 @@ namespace CollegeInfoSystem.ViewModels
     {
         private readonly UserService _userService;
         private readonly CollegeDbContext _context;
-        private DispatcherTimer _refreshTimer;
 
         public event Action? OnClearFieldsRequested;
 
@@ -89,12 +87,6 @@ namespace CollegeInfoSystem.ViewModels
 
             AddUserCommand = new RelayCommand(async () => await AddUser(), CanExecuteAddUser);
             DeleteUserCommand = new RelayCommand(async () => await DeleteUser(), CanExecuteDeleteUser);
-
-            _refreshTimer = new DispatcherTimer();
-            _refreshTimer.Interval = TimeSpan.FromSeconds(15);
-            _refreshTimer.Tick += async (s, e) => await LoadDataAsync();
-            _refreshTimer.Start();
-
         }
 
         public async Task LoadDataAsync()
