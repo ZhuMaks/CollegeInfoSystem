@@ -8,16 +8,10 @@ namespace CollegeInfoSystem.Services;
 
 public class ScheduleService
 {
-    private readonly CollegeDbContext _context;
-
-    public ScheduleService(CollegeDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<List<Schedule>> GetAllSchedulesAsync()
     {
-        return await _context.Schedules
+        using var context = new CollegeDbContext();
+        return await context.Schedules
             .Include(s => s.Group)
             .Include(s => s.Teacher)
             .ToListAsync();
@@ -25,31 +19,36 @@ public class ScheduleService
 
     public async Task<List<Schedule>> GetSchedulesByGroupAsync(int groupId)
     {
-        return await _context.Schedules
+        using var context = new CollegeDbContext();
+        return await context.Schedules
             .Where(s => s.GroupID == groupId)
             .Include(s => s.Teacher)
+            .Include(s => s.Group)
             .ToListAsync();
     }
 
     public async Task AddScheduleAsync(Schedule schedule)
     {
-        _context.Schedules.Add(schedule);
-        await _context.SaveChangesAsync();
+        using var context = new CollegeDbContext();
+        context.Schedules.Add(schedule);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateScheduleAsync(Schedule schedule)
     {
-        _context.Schedules.Update(schedule);
-        await _context.SaveChangesAsync();
+        using var context = new CollegeDbContext();
+        context.Schedules.Update(schedule);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteScheduleAsync(int id)
     {
-        var schedule = await _context.Schedules.FindAsync(id);
+        using var context = new CollegeDbContext();
+        var schedule = await context.Schedules.FindAsync(id);
         if (schedule != null)
         {
-            _context.Schedules.Remove(schedule);
-            await _context.SaveChangesAsync();
+            context.Schedules.Remove(schedule);
+            await context.SaveChangesAsync();
         }
     }
 }
