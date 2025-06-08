@@ -29,14 +29,37 @@ public class GroupService
     public async Task AddGroupAsync(Group group)
     {
         using var context = new CollegeDbContext();
+
+        if (group.Faculty != null)
+        {
+            context.Faculties.Attach(group.Faculty);
+        }
+        if (group.Curator != null)
+        {
+            context.Teachers.Attach(group.Curator);
+        }
+
         context.Groups.Add(group);
         await context.SaveChangesAsync();
     }
 
+
     public async Task UpdateGroupAsync(Group group)
     {
         using var context = new CollegeDbContext();
-        context.Groups.Update(group);
+
+        context.Entry(group).State = EntityState.Modified;
+
+        if (group.Faculty != null)
+        {
+            context.Entry(group.Faculty).State = EntityState.Unchanged;
+        }
+
+        if (group.Curator != null)
+        {
+            context.Entry(group.Curator).State = EntityState.Unchanged;
+        }
+
         await context.SaveChangesAsync();
     }
 

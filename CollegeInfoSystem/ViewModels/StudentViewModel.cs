@@ -41,6 +41,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
     private bool _isEditing = false;
 
     private string _searchText;
+    private bool _isLoading;
     public string SearchText
     {
         get => _searchText;
@@ -48,7 +49,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
         {
             _searchText = value;
             OnPropertyChanged();
-            ApplyFilters();
+            if (!_isLoading) ApplyFilters();
         }
     }
 
@@ -60,7 +61,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
         {
             _selectedGroup = value;
             OnPropertyChanged();
-            ApplyFilters();
+            if (!_isLoading) ApplyFilters();
         }
     }
 
@@ -147,13 +148,22 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
     public async Task LoadDataAsync()
     {
-        Students.Clear();
-        Groups.Clear();
-        _allStudents = (await _studentService.GetAllStudentsAsync()).ToList();
-        var allGroups = await _groupService.GetAllGroupsAsync();
+        _isLoading = true;
 
+        var prevSelectedGroup = SelectedGroup;
+        var prevSearchText = SearchText;
+
+        _allStudents = (await _studentService.GetAllStudentsAsync()).ToList();
+
+        var allGroups = await _groupService.GetAllGroupsAsync();
+        Groups.Clear();
         foreach (var g in allGroups)
             Groups.Add(g);
+
+        SelectedGroup = Groups.FirstOrDefault(g => g.GroupID == prevSelectedGroup?.GroupID);
+        SearchText = prevSearchText;
+
+        _isLoading = false;
 
         ApplyFilters();
     }

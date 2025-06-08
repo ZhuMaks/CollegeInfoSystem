@@ -62,7 +62,8 @@
                   HorizontalContentAlignment="Stretch"
                   VerticalContentAlignment="Stretch"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  x:Name="StudentsDataGrid">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="ID" DisplayMemberBinding="{Binding StudentID}" Width="60"/>

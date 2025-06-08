@@ -157,6 +157,10 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
 
         _allSchedules = schedules.ToList();
 
+        var selectedGroupId = SelectedGroup?.GroupID;
+        var selectedTeacherId = SelectedTeacher?.TeacherID;
+        var selectedDay = SelectedDay;
+
         Groups.Clear();
         foreach (var group in groups)
             Groups.Add(group);
@@ -165,8 +169,13 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
         foreach (var teacher in teachers)
             Teachers.Add(teacher);
 
+        SelectedGroup = Groups.FirstOrDefault(g => g.GroupID == selectedGroupId);
+        SelectedTeacher = Teachers.FirstOrDefault(t => t.TeacherID == selectedTeacherId);
+        SelectedDay = DaysOfWeek.Contains(selectedDay) ? selectedDay : "";
+
         ApplyFilters();
     }
+
 
     private void ApplyFilters()
     {

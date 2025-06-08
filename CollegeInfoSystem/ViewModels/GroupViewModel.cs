@@ -160,21 +160,30 @@ public class GroupViewModel : BaseViewModel, ILoadable
 
     public async Task LoadDataAsync()
     {
-        Groups.Clear();
+        var selectedFacultyId = SelectedFaculty?.FacultyID;
+        var selectedCuratorId = SelectedCurator?.TeacherID;
+        var currentGroupNameFilter = GroupNameFilter;
+
         _allGroups = (await _groupService.GetAllGroupsAsync()).ToList();
 
-        Faculties.Clear();
         var faculties = await _facultyService.GetAllFacultiesAsync();
+        Faculties.Clear();
         foreach (var f in faculties)
             Faculties.Add(f);
+        SelectedFaculty = Faculties.FirstOrDefault(f => f.FacultyID == selectedFacultyId);
 
-        Curators.Clear();
         var curators = await _teacherService.GetAllTeachersAsync();
+        Curators.Clear();
         foreach (var c in curators)
             Curators.Add(c);
+        SelectedCurator = Curators.FirstOrDefault(c => c.TeacherID == selectedCuratorId);
+
+        GroupNameFilter = currentGroupNameFilter;
 
         ApplyFilters();
     }
+
+
 
     private void ApplyFilters()
     {
