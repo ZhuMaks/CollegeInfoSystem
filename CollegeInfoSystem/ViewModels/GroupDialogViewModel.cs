@@ -100,14 +100,21 @@ public class GroupDialogViewModel : BaseViewModel
 
     private void Save()
     {
-        if (!ValidateFields())
+        try
         {
-            MessageBox.Show("Назва групи та факультет повинні бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+            if (!ValidateFields())
+            {
+                MessageBox.Show("Усі поля мають бути заповнені!", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-        IsSaved = true;
-        CloseAction?.Invoke();
+            IsSaved = true;
+            CloseAction?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Сталася помилка: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void Cancel()
