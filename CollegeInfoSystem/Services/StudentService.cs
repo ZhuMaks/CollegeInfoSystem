@@ -30,9 +30,22 @@ public class StudentService
     public async Task UpdateStudentAsync(Student student)
     {
         using var context = new CollegeDbContext();
-        context.Students.Update(student);
-        await context.SaveChangesAsync();
+
+        var existingStudent = await context.Students.FindAsync(student.StudentID);
+        if (existingStudent != null)
+        {
+            existingStudent.FirstName = student.FirstName;
+            existingStudent.LastName = student.LastName;
+            existingStudent.Email = student.Email;
+            existingStudent.Phone = student.Phone;
+            existingStudent.DateOfBirth = student.DateOfBirth;
+            existingStudent.Address = student.Address;
+            existingStudent.GroupID = student.GroupID;
+
+            await context.SaveChangesAsync();
+        }
     }
+
 
     public async Task DeleteStudentAsync(int id)
     {

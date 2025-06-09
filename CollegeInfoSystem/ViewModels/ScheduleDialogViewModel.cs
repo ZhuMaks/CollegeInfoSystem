@@ -19,22 +19,26 @@ public class ScheduleDialogViewModel : BaseViewModel
     public ObservableCollection<Group> Groups { get; set; } = new();
     public ObservableCollection<Teacher> Teachers { get; set; } = new();
 
+    private Group _selectedGroup;
     public Group SelectedGroup
     {
-        get => _schedule.Group;
+        get => _selectedGroup;
         set
         {
-            _schedule.Group = value;
+            _selectedGroup = value;
+            _schedule.GroupID = value?.GroupID ?? 0;
             OnPropertyChanged();
         }
     }
 
+    private Teacher _selectedTeacher;
     public Teacher SelectedTeacher
     {
-        get => _schedule.Teacher;
+        get => _selectedTeacher;
         set
         {
-            _schedule.Teacher = value;
+            _selectedTeacher = value;
+            _schedule.TeacherID = value?.TeacherID ?? 0;
             OnPropertyChanged();
         }
     }
@@ -109,13 +113,24 @@ public class ScheduleDialogViewModel : BaseViewModel
         var groups = await _groupService.GetAllGroupsAsync();
         var teachers = await _teacherService.GetAllTeachersAsync();
 
-        Groups = new ObservableCollection<Group>(groups);
-        OnPropertyChanged(nameof(Groups));
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Groups.Clear();
+            foreach (var group in groups)
+                Groups.Add(group);
 
-        Teachers = new ObservableCollection<Teacher>(teachers);
+            Teachers.Clear();
+            foreach (var teacher in teachers)
+                Teachers.Add(teacher);
+
+            // Призначення вибраних елементів
+            SelectedGroup = Groups.FirstOrDefault(g => g.GroupID == _schedule.GroupID);
+            SelectedTeacher = Teachers.FirstOrDefault(t => t.TeacherID == _schedule.TeacherID);
+        });
+
+        OnPropertyChanged(nameof(Groups));
         OnPropertyChanged(nameof(Teachers));
     }
-
 
     private bool ValidateFields()
     {

@@ -79,15 +79,22 @@ public class StudentDialogViewModel : BaseViewModel
         }
     }
 
+    private Group _selectedGroup;
+
     public Group SelectedGroup
     {
-        get => _student.Group;
+        get => _selectedGroup;
         set
         {
-            _student.Group = value;
-            OnPropertyChanged();
+            if (_selectedGroup != value)
+            {
+                _selectedGroup = value;
+                _student.GroupID = value?.GroupID ?? 0;
+                OnPropertyChanged();
+            }
         }
     }
+
 
     public RelayCommand SaveCommand { get; }
     public RelayCommand CancelCommand { get; }
@@ -112,6 +119,8 @@ public class StudentDialogViewModel : BaseViewModel
         CancelCommand = new RelayCommand(Cancel);
 
         Task.Run(async () => await LoadGroupsAsync());
+
+        SelectedGroup = _student.Group;
     }
 
     private async Task LoadGroupsAsync()
