@@ -416,9 +416,25 @@ public class ScheduleViewModel : BaseViewModel, ILoadable
                             Room = room
                         };
 
+                        var duplicateExists = _allSchedules.Any(s =>
+                            s.GroupID == schedule.GroupID &&
+                            s.TeacherID == schedule.TeacherID &&
+                            s.Subject.Equals(schedule.Subject, StringComparison.OrdinalIgnoreCase) &&
+                            s.DayOfWeek.Equals(schedule.DayOfWeek, StringComparison.OrdinalIgnoreCase) &&
+                            s.StartTime == schedule.StartTime &&
+                            s.EndTime == schedule.EndTime &&
+                            s.Room.Equals(schedule.Room, StringComparison.OrdinalIgnoreCase));
+
+                        if (duplicateExists)
+                        {
+                            skipped++;
+                            continue;
+                        }
+
                         try
                         {
                             await _scheduleService.AddScheduleAsync(schedule);
+                            _allSchedules.Add(schedule); // Додай вручну в локальний кеш
                             imported++;
                         }
                         catch (Exception ex)

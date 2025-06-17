@@ -349,9 +349,26 @@ public class StudentViewModel : BaseViewModel, ILoadable
                         var lastName = row.Cell(2).GetString().Trim();
                         var email = row.Cell(3).GetString().Trim();
                         var phone = row.Cell(4).GetString().Trim();
-                        var dateOfBirth = row.Cell(5).GetDateTime();
+                        var dateOfBirthStr = row.Cell(5).GetString().Trim();
                         var address = row.Cell(6).GetString().Trim();
                         var groupName = row.Cell(7).GetString().Trim();
+
+                        // Перевірка дати
+                        if (!DateTime.TryParse(dateOfBirthStr, out DateTime dateOfBirth))
+                        {
+                            System.Windows.MessageBox.Show($"Некоректна дата народження '{dateOfBirthStr}' у рядку {row.RowNumber()}. Рядок пропущено.");
+                            continue;
+                        }
+
+                        // Перевірка групи
+                        var group = Groups.FirstOrDefault(g =>
+                            g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
+
+                        if (group == null)
+                        {
+                            System.Windows.MessageBox.Show($"Групу '{groupName}' не знайдено у базі. Рядок {row.RowNumber()} пропущено.");
+                            continue;
+                        }
 
                         bool exists = existingStudents.Any(s =>
                             s.FirstName.Equals(firstName, StringComparison.OrdinalIgnoreCase) &&
@@ -361,9 +378,6 @@ public class StudentViewModel : BaseViewModel, ILoadable
 
                         if (!exists)
                         {
-                            var group = Groups.FirstOrDefault(g =>
-                                g.GroupName.Equals(groupName, StringComparison.OrdinalIgnoreCase));
-
                             var student = new Student
                             {
                                 FirstName = firstName,
@@ -372,7 +386,7 @@ public class StudentViewModel : BaseViewModel, ILoadable
                                 Phone = phone,
                                 DateOfBirth = dateOfBirth,
                                 Address = address,
-                                GroupID = group?.GroupID ?? 0
+                                GroupID = group.GroupID
                             };
 
                             await _studentService.AddStudentAsync(student);
